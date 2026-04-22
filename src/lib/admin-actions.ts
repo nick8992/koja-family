@@ -73,53 +73,50 @@ export async function approveClaimAction(formData: FormData): Promise<void> {
     new_value: string | null;
   }[];
 
-  await db.execute(sql`BEGIN`);
   try {
-    await db.execute(sql`
-      UPDATE users SET approved_at = NOW(), rejected_at = NULL, is_active = TRUE
-       WHERE id = ${userId}
-    `);
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`
+        UPDATE users SET approved_at = NOW(), rejected_at = NULL, is_active = TRUE
+         WHERE id = ${userId}
+      `);
 
-    for (const p of pending) {
-      // Capture old value
-      const oldRows = await db.execute(
-        sql`SELECT ${sql.raw(p.field_name)} AS v FROM persons WHERE id = ${p.person_id}`
-      );
-      const oldValue =
-        (oldRows as unknown as { v: unknown }[])[0]?.v == null
-          ? null
-          : String((oldRows as unknown as { v: unknown }[])[0].v);
+      for (const p of pending) {
+        const oldRows = await tx.execute(
+          sql`SELECT ${sql.raw(p.field_name)} AS v FROM persons WHERE id = ${p.person_id}`
+        );
+        const oldValue =
+          (oldRows as unknown as { v: unknown }[])[0]?.v == null
+            ? null
+            : String((oldRows as unknown as { v: unknown }[])[0].v);
 
-      if (COLUMN_IS_BOOL.has(p.field_name)) {
-        const b = p.new_value === 'true' || p.new_value === '1';
-        await db.execute(sql`
-          UPDATE persons SET ${sql.raw(p.field_name)} = ${b}, updated_at = NOW()
-           WHERE id = ${p.person_id}
+        if (COLUMN_IS_BOOL.has(p.field_name)) {
+          const b = p.new_value === 'true' || p.new_value === '1';
+          await tx.execute(sql`
+            UPDATE persons SET ${sql.raw(p.field_name)} = ${b}, updated_at = NOW()
+             WHERE id = ${p.person_id}
+          `);
+        } else if (COLUMN_IS_DATE.has(p.field_name)) {
+          await tx.execute(sql`
+            UPDATE persons SET ${sql.raw(p.field_name)} = ${p.new_value}::date, updated_at = NOW()
+             WHERE id = ${p.person_id}
+          `);
+        } else {
+          await tx.execute(sql`
+            UPDATE persons SET ${sql.raw(p.field_name)} = ${p.new_value}, updated_at = NOW()
+             WHERE id = ${p.person_id}
+          `);
+        }
+        await tx.execute(sql`
+          INSERT INTO edit_history (person_id, edited_by_user, field_name, old_value, new_value)
+          VALUES (${p.person_id}, ${userId}, ${p.field_name}, ${oldValue}, ${p.new_value})
         `);
-      } else if (COLUMN_IS_DATE.has(p.field_name)) {
-        await db.execute(sql`
-          UPDATE persons SET ${sql.raw(p.field_name)} = ${p.new_value}::date, updated_at = NOW()
-           WHERE id = ${p.person_id}
-        `);
-      } else {
-        await db.execute(sql`
-          UPDATE persons SET ${sql.raw(p.field_name)} = ${p.new_value}, updated_at = NOW()
-           WHERE id = ${p.person_id}
+        await tx.execute(sql`
+          UPDATE pending_edits SET status = 'applied', resolved_at = NOW()
+           WHERE id = ${p.id}
         `);
       }
-      await db.execute(sql`
-        INSERT INTO edit_history (person_id, edited_by_user, field_name, old_value, new_value)
-        VALUES (${p.person_id}, ${userId}, ${p.field_name}, ${oldValue}, ${p.new_value})
-      `);
-      await db.execute(sql`
-        UPDATE pending_edits SET status = 'applied', resolved_at = NOW()
-         WHERE id = ${p.id}
-      `);
-    }
-
-    await db.execute(sql`COMMIT`);
+    });
   } catch (err) {
-    await db.execute(sql`ROLLBACK`);
     console.error('[approve] tx failed:', err);
     throw err;
   }
@@ -142,19 +139,18 @@ export async function rejectClaimAction(formData: FormData): Promise<void> {
   const userId = Number(formData.get('userId'));
   if (!Number.isInteger(userId) || userId < 1) return;
 
-  await db.execute(sql`BEGIN`);
   try {
-    await db.execute(sql`
-      UPDATE users SET rejected_at = NOW(), is_active = FALSE
-       WHERE id = ${userId} AND approved_at IS NULL
-    `);
-    await db.execute(sql`
-      UPDATE pending_edits SET status = 'discarded', resolved_at = NOW()
-       WHERE user_id = ${userId} AND status = 'pending'
-    `);
-    await db.execute(sql`COMMIT`);
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`
+        UPDATE users SET rejected_at = NOW(), is_active = FALSE
+         WHERE id = ${userId} AND approved_at IS NULL
+      `);
+      await tx.execute(sql`
+        UPDATE pending_edits SET status = 'discarded', resolved_at = NOW()
+         WHERE user_id = ${userId} AND status = 'pending'
+      `);
+    });
   } catch (err) {
-    await db.execute(sql`ROLLBACK`);
     console.error('[reject] tx failed:', err);
     throw err;
   }

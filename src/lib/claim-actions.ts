@@ -2,16 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { AuthError } from 'next-auth';
 import bcrypt from 'bcryptjs';
 import { sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { signIn } from '@/auth';
 import { sendClaimAdminNotification, sendClaimWelcome } from './email';
 
 export type ClaimState =
   | { status: 'idle' }
-  | { status: 'ok' }
+  | { status: 'ok'; personId: number; email: string }
   | {
       status: 'error';
       code:
@@ -21,7 +19,6 @@ export type ClaimState =
         | 'bad_password'
         | 'bad_name'
         | 'not_found'
-        | 'login_failed'
         | 'generic';
     };
 
@@ -85,81 +82,73 @@ export async function claimAction(
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  // Update person row with claimer-provided name (handles Nicolas -> Nicholas
-  // correction) and insert user row in a transaction.
-  await db.execute(sql`BEGIN`);
+  // All writes in a single pinned-connection transaction so an error at
+  // any step rolls back cleanly. (postgres.js pools connections, so a
+  // raw BEGIN/COMMIT would hit different connections in serverless.)
   try {
-    await db.execute(sql`
-      UPDATE persons
-         SET first_name = ${firstName},
-             last_name  = ${lastName},
-             updated_at = NOW()
-       WHERE id = ${personId}
-    `);
-    await db.execute(sql`
-      INSERT INTO users (person_id, email, phone, password_hash, role)
-      VALUES (${personId}, ${email}, ${phone}, ${passwordHash}, 'member')
-    `);
-    // Record a notification row for the admin queue (read by /admin later).
-    await db.execute(sql`
-      INSERT INTO admin_notifications (user_id, kind, message)
-      SELECT id, 'new_claim',
-             ${`${firstName} claimed person #${personId}`}
-        FROM users WHERE email = ${email}
-    `);
-    await db.execute(sql`COMMIT`);
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`
+        UPDATE persons
+           SET first_name = ${firstName},
+               last_name  = ${lastName},
+               updated_at = NOW()
+         WHERE id = ${personId}
+      `);
+      await tx.execute(sql`
+        INSERT INTO users (person_id, email, phone, password_hash, role)
+        VALUES (${personId}, ${email}, ${phone}, ${passwordHash}, 'member')
+      `);
+      await tx.execute(sql`
+        INSERT INTO admin_notifications (user_id, kind, message)
+        SELECT id, 'new_claim',
+               ${`${firstName} claimed person #${personId}`}
+          FROM users WHERE email = ${email}
+      `);
+    });
   } catch (err) {
-    await db.execute(sql`ROLLBACK`);
     console.error('[claim] tx failed:', err);
     return { status: 'error', code: 'generic' };
   }
 
-  // Notify (best-effort)
-  const origin = await getOrigin();
-  const fullNameRows = await db.execute<{ full: string }>(sql`
-    WITH RECURSIVE chain AS (
-      SELECT id, father_id, first_name, 0 AS depth FROM persons WHERE id = ${personId}
-      UNION ALL
-      SELECT p.id, p.father_id, p.first_name, c.depth + 1
-        FROM chain c JOIN persons p ON p.id = c.father_id
-    )
-    SELECT string_agg(REPLACE(first_name, ' Koja', ''), ' ' ORDER BY depth ASC) AS full FROM chain
-  `);
-  const personFullName =
-    (fullNameRows as unknown as { full: string }[])[0]?.full?.concat(' Koja') ?? firstName;
+  // Emails are best-effort. The sendSafe wrapper inside ./email swallows
+  // failures, but wrap defensively so an exception here can't 500 the page.
+  try {
+    const origin = await getOrigin();
+    const fullNameRows = await db.execute<{ full: string }>(sql`
+      WITH RECURSIVE chain AS (
+        SELECT id, father_id, first_name, 0 AS depth FROM persons WHERE id = ${personId}
+        UNION ALL
+        SELECT p.id, p.father_id, p.first_name, c.depth + 1
+          FROM chain c JOIN persons p ON p.id = c.father_id
+      )
+      SELECT string_agg(REPLACE(first_name, ' Koja', ''), ' ' ORDER BY depth ASC) AS full FROM chain
+    `);
+    const personFullName =
+      (fullNameRows as unknown as { full: string }[])[0]?.full?.concat(' Koja') ?? firstName;
 
-  await sendClaimAdminNotification({
-    claimantDisplayName: firstName,
-    claimantEmail: email,
-    claimantPhone: phone,
-    personId,
-    personFullName,
-    siteOrigin: origin,
-  });
-  await sendClaimWelcome({
-    to: email,
-    displayName: firstName,
-    siteOrigin: origin,
-  });
+    await sendClaimAdminNotification({
+      claimantDisplayName: firstName,
+      claimantEmail: email,
+      claimantPhone: phone,
+      personId,
+      personFullName,
+      siteOrigin: origin,
+    });
+    await sendClaimWelcome({
+      to: email,
+      displayName: firstName,
+      siteOrigin: origin,
+    });
+  } catch (err) {
+    console.warn('[claim] notification step threw (ignored):', err);
+  }
 
   revalidatePath(`/profile/${personId}`);
   revalidatePath('/tree');
   revalidatePath('/');
   revalidatePath('/admin');
 
-  // Auto-sign them in — signIn throws a redirect on success that Next catches.
-  try {
-    await signIn('credentials', {
-      email,
-      password,
-      redirectTo: `/profile/${personId}`,
-    });
-  } catch (err) {
-    if (err instanceof AuthError) {
-      return { status: 'error', code: 'login_failed' };
-    }
-    throw err;
-  }
-
-  return { status: 'ok' };
+  // Don't auto-sign-in from the server action (fragile in production with
+  // custom domains). The client will call next-auth's signIn() directly.
+  return { status: 'ok', personId, email };
 }
