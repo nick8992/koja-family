@@ -37,6 +37,11 @@ function fmtBirthDeath(p: PersonRecord, lang: 'en' | 'ar'): string {
   return b;
 }
 
+function fmtBirthYear(p: PersonRecord, lang: 'en' | 'ar'): string {
+  if (p.birthYear == null) return translate(lang, 'profile.not_set');
+  return String(p.birthYear);
+}
+
 export default async function ProfilePage({ params }: Props) {
   const { id: idStr } = await params;
   const id = Number(idStr);
@@ -63,6 +68,19 @@ export default async function ProfilePage({ params }: Props) {
   const canEditHere = viewerUserId
     ? await canEditPerson(viewerUserId, id)
     : false;
+
+  // Privacy: phone / location / birth / email are visible to
+  //   (a) the person themselves,
+  //   (b) admins,
+  //   (c) signed-in + approved family members.
+  // Everyone else sees "(visible to approved family members)".
+  const isOwner = viewerPersonId === id;
+  const canSeePrivate =
+    isOwner ||
+    sessionUser?.role === 'admin' ||
+    !!sessionUser?.approved;
+  const privateLabel = translate(lang, 'profile.private');
+  const maskPrivate = (actual: string) => (canSeePrivate ? actual : privateLabel);
 
   const canAddChildHere =
     sessionUser && person.gender === 'M'
@@ -249,8 +267,16 @@ export default async function ProfilePage({ params }: Props) {
             personId={id}
             field="current_location"
             label={await tServer('profile.field.location')}
-            value={fmtField(person.currentLocation, lang)}
+            value={maskPrivate(fmtField(person.currentLocation, lang))}
             rawValue={person.currentLocation ?? ''}
+            editable={canEditHere}
+          />
+          <EditableField
+            personId={id}
+            field="birth_year"
+            label={await tServer('profile.field.birthYear')}
+            value={maskPrivate(fmtBirthYear(person, lang))}
+            rawValue={person.birthYear != null ? String(person.birthYear) : ''}
             editable={canEditHere}
           />
           <EditableField
@@ -258,7 +284,7 @@ export default async function ProfilePage({ params }: Props) {
             field="birth_date"
             label={await tServer('profile.field.born')}
             type="date"
-            value={fmtBirthDeath(person, lang)}
+            value={maskPrivate(fmtBirthDeath(person, lang))}
             rawValue={person.birthDate ?? ''}
             editable={canEditHere}
           />
@@ -274,7 +300,7 @@ export default async function ProfilePage({ params }: Props) {
             personId={id}
             field="phone"
             label={await tServer('profile.field.phone')}
-            value={fmtField(person.phonePublic ? person.phone : null, lang)}
+            value={maskPrivate(fmtField(person.phone, lang))}
             rawValue={person.phone ?? ''}
             editable={canEditHere}
           />
@@ -282,7 +308,7 @@ export default async function ProfilePage({ params }: Props) {
             personId={id}
             field="email"
             label={await tServer('profile.field.email')}
-            value={fmtField(person.email, lang)}
+            value={maskPrivate(fmtField(person.email, lang))}
             rawValue={person.email ?? ''}
             editable={canEditHere}
           />

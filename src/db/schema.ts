@@ -34,6 +34,7 @@ export const persons = pgTable(
     lastName: varchar('last_name', { length: 100 }).default('Koja'),
     nameArabic: varchar('name_arabic', { length: 200 }),
     gender: char('gender', { length: 1 }).default('M'),
+    birthYear: integer('birth_year'),
     birthDate: date('birth_date'),
     deathDate: date('death_date'),
     isDeceased: boolean('is_deceased').default(false),

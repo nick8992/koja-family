@@ -9,6 +9,7 @@ export type PersonRecord = {
   lastName: string | null;
   nameArabic: string | null;
   gender: 'M' | 'F';
+  birthYear: number | null;
   birthDate: string | null;
   deathDate: string | null;
   isDeceased: boolean;
@@ -31,6 +32,7 @@ type Row = {
   last_name: string | null;
   name_arabic: string | null;
   gender: string | null;
+  birth_year: number | null;
   birth_date: string | null;
   death_date: string | null;
   is_deceased: boolean | null;
@@ -54,6 +56,7 @@ function rowToRecord(r: Row): PersonRecord {
     lastName: r.last_name,
     nameArabic: r.name_arabic,
     gender: r.gender === 'F' ? 'F' : 'M',
+    birthYear: r.birth_year,
     birthDate: r.birth_date,
     deathDate: r.death_date,
     isDeceased: !!r.is_deceased,
@@ -88,6 +91,7 @@ const COLUMN_TO_KEY: Record<string, keyof PersonRecord> = {
   first_name: 'firstName',
   current_location: 'currentLocation',
   birthplace: 'birthplace',
+  birth_year: 'birthYear',
   birth_date: 'birthDate',
   death_date: 'deathDate',
   is_deceased: 'isDeceased',
@@ -120,6 +124,10 @@ async function overlayPendingEdits(
     if (key === 'isDeceased' || key === 'phonePublic') {
       (out as unknown as Record<string, unknown>)[key] =
         new_value === 'true' || new_value === '1';
+    } else if (key === 'birthYear') {
+      const n = new_value == null ? null : Number(new_value);
+      (out as unknown as Record<string, unknown>)[key] =
+        Number.isFinite(n) ? n : null;
     } else {
       (out as unknown as Record<string, unknown>)[key] = new_value;
     }

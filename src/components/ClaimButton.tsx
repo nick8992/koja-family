@@ -153,10 +153,49 @@ export function ClaimButton({ personId, fullName }: Props) {
                 <input
                   type="tel"
                   name="phone"
+                  required
                   autoComplete="tel"
                   className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
                 />
               </label>
+
+              <label className="font-display block text-sm italic text-ink-muted">
+                {t('claim.birthYear')}
+                <input
+                  type="number"
+                  name="birthYear"
+                  inputMode="numeric"
+                  min={1800}
+                  max={new Date().getFullYear()}
+                  required
+                  className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="font-display block text-sm italic text-ink-muted">
+                  {t('claim.state')}
+                  <input
+                    type="text"
+                    name="state"
+                    required
+                    maxLength={80}
+                    placeholder={t('claim.state.placeholder')}
+                    className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
+                  />
+                </label>
+                <label className="font-display block text-sm italic text-ink-muted">
+                  {t('claim.country')}
+                  <input
+                    type="text"
+                    name="country"
+                    required
+                    maxLength={80}
+                    placeholder={t('claim.country.placeholder')}
+                    className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
+                  />
+                </label>
+              </div>
 
               <label className="font-display block text-sm italic text-ink-muted">
                 {t('claim.password')}

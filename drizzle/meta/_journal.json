@@ -15,6 +15,13 @@
       "when": 1776884961741,
       "tag": "0001_functions_and_views",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776899688050,
+      "tag": "0002_aromatic_groot",
+      "breakpoints": true
     }
   ]
 }

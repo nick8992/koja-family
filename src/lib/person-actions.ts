@@ -94,13 +94,14 @@ export type UpdateFieldState =
   | { status: 'ok'; pending: boolean }
   | { status: 'error'; message: string };
 
-type FieldType = 'text' | 'textarea' | 'date' | 'bool';
+type FieldType = 'text' | 'textarea' | 'date' | 'bool' | 'int';
 
 // Whitelist of editable columns + their input type.
 const EDITABLE_FIELDS: Record<string, FieldType> = {
   first_name: 'text',
   current_location: 'text',
   birthplace: 'text',
+  birth_year: 'int',
   birth_date: 'date',
   death_date: 'date',
   is_deceased: 'bool',
@@ -114,9 +115,13 @@ const EDITABLE_FIELDS: Record<string, FieldType> = {
 // Admin-only fields.
 const ADMIN_ONLY_FIELDS = new Set<string>(['notes']);
 
-function coerceForColumn(type: FieldType, raw: string): string | boolean | null {
+function coerceForColumn(type: FieldType, raw: string): string | boolean | number | null {
   if (raw === '' || raw == null) return type === 'bool' ? false : null;
   if (type === 'bool') return raw === 'true' || raw === 'on' || raw === '1';
+  if (type === 'int') {
+    const n = Number(raw);
+    return Number.isFinite(n) ? Math.trunc(n) : null;
+  }
   return raw;
 }
 
@@ -124,7 +129,7 @@ async function writeField(
   personId: number,
   column: string,
   type: FieldType,
-  value: string | boolean | null,
+  value: string | boolean | number | null,
   editedByUser: number
 ): Promise<void> {
   // Capture old value for the audit log.
@@ -142,6 +147,12 @@ async function writeField(
     const v = value == null ? null : String(value);
     await db.execute(sql`
       UPDATE persons SET ${sql.raw(column)} = ${v}::date, updated_at = NOW()
+       WHERE id = ${personId}
+    `);
+  } else if (type === 'int') {
+    const v = value == null ? null : Number(value);
+    await db.execute(sql`
+      UPDATE persons SET ${sql.raw(column)} = ${v}, updated_at = NOW()
        WHERE id = ${personId}
     `);
   } else {
@@ -162,7 +173,7 @@ async function queuePendingEdit(
   userId: number,
   personId: number,
   column: string,
-  value: string | boolean | null
+  value: string | boolean | number | null
 ): Promise<void> {
   const valueText = value == null ? null : String(value);
   // Replace any previous pending write for the same (user, person, field).

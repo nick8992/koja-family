@@ -49,6 +49,21 @@ export async function claimAction(
   const phone = String(formData.get('phone') ?? '').trim() || null;
   const password = String(formData.get('password') ?? '');
 
+  const birthYearRaw = String(formData.get('birthYear') ?? '').trim();
+  const birthYearNum = birthYearRaw ? Number(birthYearRaw) : null;
+  const birthYear =
+    birthYearNum != null &&
+    Number.isFinite(birthYearNum) &&
+    birthYearNum >= 1800 &&
+    birthYearNum <= new Date().getFullYear()
+      ? Math.trunc(birthYearNum)
+      : null;
+
+  const state = String(formData.get('state') ?? '').trim();
+  const country = String(formData.get('country') ?? '').trim();
+  const locationParts = [state, country].filter((s) => s.length > 0);
+  const location = locationParts.length > 0 ? locationParts.join(', ') : null;
+
   if (!email) return { status: 'error', code: 'bad_email' };
   if (password.length < 8) return { status: 'error', code: 'bad_password' };
 
@@ -89,6 +104,16 @@ export async function claimAction(
       await tx.execute(sql`
         INSERT INTO users (person_id, email, phone, password_hash, role)
         VALUES (${personId}, ${email}, ${phone}, ${passwordHash}, 'member')
+      `);
+      // Write the initial profile fields the claimant provided.
+      // These are private-by-default (only approved members see them).
+      await tx.execute(sql`
+        UPDATE persons
+           SET phone = COALESCE(${phone}, phone),
+               birth_year = COALESCE(${birthYear}, birth_year),
+               current_location = COALESCE(${location}, current_location),
+               updated_at = NOW()
+         WHERE id = ${personId}
       `);
       await tx.execute(sql`
         INSERT INTO admin_notifications (user_id, kind, message)
