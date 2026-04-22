@@ -8,11 +8,16 @@ import {
   displayFullName,
   type PersonRecord,
 } from '@/lib/person-data';
-import { canAddChildUnder, type SessionUser } from '@/lib/permissions';
+import {
+  canAddChildUnder,
+  canEditPerson,
+  type SessionUser,
+} from '@/lib/permissions';
 import { relationship } from '@/lib/relationships';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { AddChildButton } from '@/components/AddChildButton';
+import { EditableField } from '@/components/EditableField';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +40,16 @@ export default async function ProfilePage({ params }: Props) {
   const id = Number(idStr);
   if (!Number.isInteger(id) || id < 1) notFound();
 
-  const person = await getPerson(id);
+  const session = await auth();
+  const sessionUser = session?.user as SessionUser | undefined;
+  const viewerUserId = sessionUser?.id ? Number(sessionUser.id) : null;
+  const viewerPersonId = sessionUser?.personId ?? null;
+
+  // Overlay unapproved viewer's own pending edits onto the record they see.
+  const person = await getPerson(
+    id,
+    sessionUser && !sessionUser.approved ? viewerUserId : null
+  );
   if (!person) notFound();
 
   const lang = await getLanguage();
@@ -43,23 +57,20 @@ export default async function ProfilePage({ params }: Props) {
   const ancestorsRootFirst = [...ancestorsSelfFirst].reverse();
   const children = await getChildren(id);
 
-  // Viewer's perspective — compute "your ___" label if signed in.
-  const session = await auth();
-  const sessionUser = session?.user as SessionUser | undefined;
-  const viewerPersonId = sessionUser?.personId ?? null;
+  // Edit permissions
+  const canEditHere = viewerUserId
+    ? await canEditPerson(viewerUserId, id)
+    : false;
 
-  // Add-child is allowed if (a) this person is male (daughters are leaves in
-  // the Koja patrilineal tree) and (b) the viewer has permission.
   const canAddChildHere =
     sessionUser && person.gender === 'M'
       ? await canAddChildUnder(sessionUser, person.id)
       : false;
 
-  // Admin-only: on Hanna's profile, offer "add root-level sibling of Hanna"
-  // (creates a new person with father_id = NULL).
   const canAddRootSibling =
     sessionUser?.role === 'admin' && person.id === 1;
 
+  // Relationship label ("your father", etc.)
   let relLabel: string | null = null;
   if (viewerPersonId && viewerPersonId !== id) {
     const viewerChain = await getAncestors(viewerPersonId, false);
@@ -158,7 +169,7 @@ export default async function ProfilePage({ params }: Props) {
               type="button"
               disabled
               className="font-display cursor-not-allowed rounded-sm border border-olive-deep bg-olive-deep px-4 py-1.5 text-sm text-cream opacity-70"
-              title="Claim flow ships in Phase 3"
+              title="Claim flow ships next checkpoint"
             >
               {await tServer('profile.action.claim')}
             </button>
@@ -216,30 +227,73 @@ export default async function ProfilePage({ params }: Props) {
           <h3 className="font-display mb-3.5 border-b border-border pb-2 text-xl font-medium text-ink">
             {await tServer('profile.details')}
           </h3>
-          <Field label={await tServer('profile.field.name')} value={person.firstName} />
-          <Field
+          <EditableField
+            personId={id}
+            field="first_name"
+            label={await tServer('profile.field.name')}
+            value={person.firstName}
+            rawValue={person.firstName}
+            editable={canEditHere}
+          />
+          <EditableField
+            personId={id}
+            field="current_location"
             label={await tServer('profile.field.location')}
             value={fmtField(person.currentLocation, lang)}
+            rawValue={person.currentLocation ?? ''}
+            editable={canEditHere}
           />
-          <Field
+          <EditableField
+            personId={id}
+            field="birth_date"
             label={await tServer('profile.field.born')}
+            type="date"
             value={fmtBirthDeath(person, lang)}
+            rawValue={person.birthDate ?? ''}
+            editable={canEditHere}
           />
-          <Field
+          <EditableField
+            personId={id}
+            field="occupation"
             label={await tServer('profile.field.occupation')}
             value={fmtField(person.occupation, lang)}
+            rawValue={person.occupation ?? ''}
+            editable={canEditHere}
           />
-          <Field
+          <EditableField
+            personId={id}
+            field="phone"
             label={await tServer('profile.field.phone')}
             value={fmtField(person.phonePublic ? person.phone : null, lang)}
+            rawValue={person.phone ?? ''}
+            editable={canEditHere}
           />
-          <Field
+          <EditableField
+            personId={id}
+            field="email"
             label={await tServer('profile.field.email')}
             value={fmtField(person.email, lang)}
+            rawValue={person.email ?? ''}
+            editable={canEditHere}
           />
+          {canEditHere ? (
+            <EditableField
+              personId={id}
+              field="is_deceased"
+              label={await tServer('edit.deceased.title')}
+              type="bool"
+              value={
+                person.isDeceased
+                  ? await tServer('tree.legend.deceased')
+                  : await tServer('profile.not_set')
+              }
+              rawValue={person.isDeceased ? 'true' : 'false'}
+              editable
+            />
+          ) : null}
           <ChildrenField
             label={await tServer('profile.field.children')}
-            children={children}
+            childs={children}
             empty={await tServer('profile.no_children')}
           />
         </section>
@@ -247,9 +301,21 @@ export default async function ProfilePage({ params }: Props) {
           <h3 className="font-display mb-3.5 border-b border-border pb-2 text-xl font-medium text-ink">
             {await tServer('profile.biography')}
           </h3>
-          <p className="font-display whitespace-pre-wrap py-3 text-[15px] italic leading-relaxed text-ink-soft">
-            {person.bio || (await tServer('profile.no_bio'))}
-          </p>
+          {canEditHere ? (
+            <EditableField
+              personId={id}
+              field="bio"
+              label={await tServer('profile.biography')}
+              type="textarea"
+              value={person.bio || (await tServer('profile.no_bio'))}
+              rawValue={person.bio ?? ''}
+              editable
+            />
+          ) : (
+            <p className="font-display whitespace-pre-wrap py-3 text-[15px] italic leading-relaxed text-ink-soft">
+              {person.bio || (await tServer('profile.no_bio'))}
+            </p>
+          )}
         </section>
       </div>
     </div>
@@ -265,33 +331,24 @@ function MetaBullet({ children, accent }: { children: React.ReactNode; accent?: 
   );
 }
 
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between border-b border-dotted border-border py-2 text-sm last:border-b-0">
-      <span className="font-display italic text-ink-muted">{label}</span>
-      <span className="font-medium text-ink">{value}</span>
-    </div>
-  );
-}
-
 function ChildrenField({
   label,
-  children,
+  childs,
   empty,
 }: {
   label: string;
-  children: PersonRecord[];
+  childs: PersonRecord[];
   empty: string;
 }) {
   return (
     <div className="flex justify-between border-b border-dotted border-border py-2 text-sm last:border-b-0">
       <span className="font-display italic text-ink-muted">{label}</span>
       <span className="max-w-[60%] text-end">
-        {children.length === 0 ? (
+        {childs.length === 0 ? (
           <em className="text-ink-muted">{empty}</em>
         ) : (
           <span className="flex flex-wrap justify-end gap-x-2">
-            {children.map((c, i) => (
+            {childs.map((c, i) => (
               <span key={c.id}>
                 <Link
                   href={`/profile/${c.id}`}
@@ -299,7 +356,7 @@ function ChildrenField({
                 >
                   {c.firstName.replace(/ Koja$/, '')}
                 </Link>
-                {i < children.length - 1 ? ',' : ''}
+                {i < childs.length - 1 ? ',' : ''}
               </span>
             ))}
           </span>

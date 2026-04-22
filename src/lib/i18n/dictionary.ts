@@ -130,6 +130,16 @@ export const I18N: Record<Lang, Dict> = {
     'addperson.error.bad_gender': 'Please choose a gender.',
     'addperson.error.not_signed_in': 'Sign in first.',
 
+    'edit.title': 'Edit',
+    'edit.save': 'Save',
+    'edit.cancel': 'Cancel',
+    'edit.error.forbidden': 'You can only edit yourself, your father, grandfather, or great-grandfather.',
+    'edit.error.generic': 'Could not save. Please try again.',
+    'edit.deceased.title': 'Mark as deceased',
+    'edit.deceased.cta': 'Mark deceased',
+    'edit.deceased.undo': 'Mark living',
+    'edit.deceased.date': 'Date of passing (optional)',
+
     'login.title': 'Sign in',
     'login.sub': 'Sign in to post, comment, edit your profile, and manage the tree.',
     'login.email': 'Email',
@@ -284,6 +294,16 @@ export const I18N: Record<Lang, Dict> = {
     'addperson.error.bad_name': 'الرجاء إدخال الاسم الأول.',
     'addperson.error.bad_gender': 'الرجاء اختيار الجنس.',
     'addperson.error.not_signed_in': 'سجّل دخولك أولاً.',
+
+    'edit.title': 'تعديل',
+    'edit.save': 'حفظ',
+    'edit.cancel': 'إلغاء',
+    'edit.error.forbidden': 'يمكنك فقط تعديل نفسك، أو أبيك، أو جدّك، أو جدّ جدّك.',
+    'edit.error.generic': 'تعذّر الحفظ. حاول مرة أخرى.',
+    'edit.deceased.title': 'تحديد الوفاة',
+    'edit.deceased.cta': 'تحديد كمتوفّى',
+    'edit.deceased.undo': 'تحديد كحيّ',
+    'edit.deceased.date': 'تاريخ الوفاة (اختياري)',
 
     'login.title': 'تسجيل الدخول',
     'login.sub': 'سجّل دخولك لتنشر وتعلّق وتعدّل ملفّك وتدير الشجرة.',

@@ -70,12 +70,61 @@ function rowToRecord(r: Row): PersonRecord {
   };
 }
 
-export async function getPerson(id: number): Promise<PersonRecord | null> {
+export async function getPerson(
+  id: number,
+  overlayUserId: number | null = null
+): Promise<PersonRecord | null> {
   const rows = await db.execute<Row>(sql`
     SELECT * FROM person_with_claim WHERE id = ${id} LIMIT 1
   `);
   const arr = rows as unknown as Row[];
-  return arr.length ? rowToRecord(arr[0]) : null;
+  if (arr.length === 0) return null;
+  const record = rowToRecord(arr[0]);
+  if (overlayUserId == null) return record;
+  return await overlayPendingEdits(record, overlayUserId);
+}
+
+const COLUMN_TO_KEY: Record<string, keyof PersonRecord> = {
+  first_name: 'firstName',
+  current_location: 'currentLocation',
+  birthplace: 'birthplace',
+  birth_date: 'birthDate',
+  death_date: 'deathDate',
+  is_deceased: 'isDeceased',
+  occupation: 'occupation',
+  phone: 'phone',
+  phone_public: 'phonePublic',
+  email: 'email',
+  bio: 'bio',
+  notes: 'notes',
+};
+
+async function overlayPendingEdits(
+  record: PersonRecord,
+  userId: number
+): Promise<PersonRecord> {
+  const pending = await db.execute<{ field_name: string; new_value: string | null }>(sql`
+    SELECT field_name, new_value
+      FROM pending_edits
+     WHERE user_id = ${userId}
+       AND person_id = ${record.id}
+       AND status = 'pending'
+  `);
+  const rows = pending as unknown as { field_name: string; new_value: string | null }[];
+  if (rows.length === 0) return record;
+
+  const out: PersonRecord = { ...record };
+  for (const { field_name, new_value } of rows) {
+    const key = COLUMN_TO_KEY[field_name];
+    if (!key) continue;
+    if (key === 'isDeceased' || key === 'phonePublic') {
+      (out as unknown as Record<string, unknown>)[key] =
+        new_value === 'true' || new_value === '1';
+    } else {
+      (out as unknown as Record<string, unknown>)[key] = new_value;
+    }
+  }
+  return out;
 }
 
 /** Patrilineal chain from self → root, already ordered root-first if `rootFirst` is true. */
