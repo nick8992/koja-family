@@ -44,16 +44,11 @@ export async function claimAction(
     return { status: 'error', code: 'not_found' };
   }
 
-  const firstName = String(formData.get('firstName') ?? '').trim();
-  const lastName = String(formData.get('lastName') ?? 'Koja').trim() || 'Koja';
   const rawEmail = String(formData.get('email') ?? '');
   const email = normalizeEmail(rawEmail);
   const phone = String(formData.get('phone') ?? '').trim() || null;
   const password = String(formData.get('password') ?? '');
 
-  if (firstName.length < 1 || firstName.length > 100) {
-    return { status: 'error', code: 'bad_name' };
-  }
   if (!email) return { status: 'error', code: 'bad_email' };
   if (password.length < 8) return { status: 'error', code: 'bad_password' };
 
@@ -63,6 +58,7 @@ export async function claimAction(
   `);
   const personArr = personRows as unknown as { id: number; first_name: string }[];
   if (personArr.length === 0) return { status: 'error', code: 'not_found' };
+  const firstName = personArr[0].first_name;
 
   // Already claimed?
   const existingClaim = await db.execute<{ id: number }>(
@@ -85,15 +81,11 @@ export async function claimAction(
   // All writes in a single pinned-connection transaction so an error at
   // any step rolls back cleanly. (postgres.js pools connections, so a
   // raw BEGIN/COMMIT would hit different connections in serverless.)
+  // Note: we do NOT update persons.first_name/last_name on claim — the
+  // person's existing name stays as-is. Claimant can correct spelling
+  // via the profile edit flow after sign-in.
   try {
     await db.transaction(async (tx) => {
-      await tx.execute(sql`
-        UPDATE persons
-           SET first_name = ${firstName},
-               last_name  = ${lastName},
-               updated_at = NOW()
-         WHERE id = ${personId}
-      `);
       await tx.execute(sql`
         INSERT INTO users (person_id, email, phone, password_hash, role)
         VALUES (${personId}, ${email}, ${phone}, ${passwordHash}, 'member')

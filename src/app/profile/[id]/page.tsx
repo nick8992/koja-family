@@ -175,11 +175,7 @@ export default async function ProfilePage({ params }: Props) {
               {await tServer('profile.action.claim')}
             </button>
           ) : (
-            <ClaimButton
-              personId={person.id}
-              initialFirstName={person.firstName}
-              fullName={fullName}
-            />
+            <ClaimButton personId={person.id} fullName={fullName} />
           )}
           {canAddChildHere ? (
             <AddChildButton
