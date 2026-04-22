@@ -8,9 +8,11 @@ import {
   displayFullName,
   type PersonRecord,
 } from '@/lib/person-data';
+import { canAddChildUnder, type SessionUser } from '@/lib/permissions';
 import { relationship } from '@/lib/relationships';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
+import { AddChildButton } from '@/components/AddChildButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,10 +45,20 @@ export default async function ProfilePage({ params }: Props) {
 
   // Viewer's perspective — compute "your ___" label if signed in.
   const session = await auth();
-  const sessionUser = session?.user as
-    | { personId?: number | null; displayName?: string }
-    | undefined;
+  const sessionUser = session?.user as SessionUser | undefined;
   const viewerPersonId = sessionUser?.personId ?? null;
+
+  // Add-child is allowed if (a) this person is male (daughters are leaves in
+  // the Koja patrilineal tree) and (b) the viewer has permission.
+  const canAddChildHere =
+    sessionUser && person.gender === 'M'
+      ? await canAddChildUnder(sessionUser, person.id)
+      : false;
+
+  // Admin-only: on Hanna's profile, offer "add root-level sibling of Hanna"
+  // (creates a new person with father_id = NULL).
+  const canAddRootSibling =
+    sessionUser?.role === 'admin' && person.id === 1;
 
   let relLabel: string | null = null;
   if (viewerPersonId && viewerPersonId !== id) {
@@ -124,7 +136,7 @@ export default async function ProfilePage({ params }: Props) {
           </div>
         </div>
 
-        <div className="relative">
+        <div className="relative flex flex-col gap-2">
           {person.claimStatus === 'approved' ? (
             <button
               type="button"
@@ -151,6 +163,21 @@ export default async function ProfilePage({ params }: Props) {
               {await tServer('profile.action.claim')}
             </button>
           )}
+          {canAddChildHere ? (
+            <AddChildButton
+              fatherId={person.id}
+              label={await tServer('addperson.cta.child')}
+              parentLabel={person.firstName}
+              variant="primary"
+            />
+          ) : null}
+          {canAddRootSibling ? (
+            <AddChildButton
+              fatherId={null}
+              label={await tServer('addperson.cta.root_sibling')}
+              parentLabel={await tServer('addperson.sub.root')}
+            />
+          ) : null}
         </div>
       </section>
 

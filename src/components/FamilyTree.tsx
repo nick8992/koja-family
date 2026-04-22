@@ -397,6 +397,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
               const idY = isVert ? p.y + 34 : p.y + 15;
               const anchor = isVert ? 'middle' : 'start';
 
+              const isFemale = n.gender === 'F';
               return (
                 <g
                   key={n.id}
@@ -416,7 +417,20 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
                   }}
                   onMouseLeave={() => setTooltip(null)}
                 >
-                  <circle cx={p.x} cy={p.y} r={7} fill={fill} stroke={stroke} strokeWidth={1.5} />
+                  {isFemale ? (
+                    <rect
+                      x={p.x - 7}
+                      y={p.y - 7}
+                      width={14}
+                      height={14}
+                      fill={fill}
+                      stroke={stroke}
+                      strokeWidth={1.5}
+                      transform={`rotate(45 ${p.x} ${p.y})`}
+                    />
+                  ) : (
+                    <circle cx={p.x} cy={p.y} r={7} fill={fill} stroke={stroke} strokeWidth={1.5} />
+                  )}
                   <text
                     x={labelX}
                     y={labelY}
@@ -451,6 +465,10 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
           <LegendRow swatch="var(--color-olive-deep)" label={t('tree.legend.claimed')} />
           <LegendRow swatch="var(--color-cream)" outline label={t('tree.legend.unclaimed')} />
           <LegendRow swatch="var(--color-terracotta)" label={t('tree.legend.you')} />
+          <div className="mt-1.5 border-t border-dotted border-border pt-1.5">
+            <LegendRow swatch="var(--color-ink-muted)" label={t('tree.legend.male')} />
+            <LegendRow swatch="var(--color-ink-muted)" shape="diamond" label={t('tree.legend.female')} />
+          </div>
         </div>
 
         {/* Zoom controls */}
@@ -504,18 +522,22 @@ function LegendRow({
   swatch,
   outline,
   label,
+  shape = 'circle',
 }: {
   swatch: string;
   outline?: boolean;
   label: string;
+  shape?: 'circle' | 'diamond';
 }) {
   return (
     <div className="flex items-center gap-2 py-0.5">
       <span
-        className="block h-3 w-3 rounded-full"
+        className="block h-3 w-3"
         style={{
           background: swatch,
           border: outline ? '1px solid var(--color-border-dark)' : 'none',
+          borderRadius: shape === 'circle' ? '50%' : 0,
+          transform: shape === 'diamond' ? 'rotate(45deg)' : undefined,
         }}
       />
       <span>{label}</span>

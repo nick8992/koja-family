@@ -8,6 +8,7 @@ export type PersonRecord = {
   firstName: string;
   lastName: string | null;
   nameArabic: string | null;
+  gender: 'M' | 'F';
   birthDate: string | null;
   deathDate: string | null;
   isDeceased: boolean;
@@ -29,6 +30,7 @@ type Row = {
   first_name: string;
   last_name: string | null;
   name_arabic: string | null;
+  gender: string | null;
   birth_date: string | null;
   death_date: string | null;
   is_deceased: boolean | null;
@@ -51,6 +53,7 @@ function rowToRecord(r: Row): PersonRecord {
     firstName: r.first_name,
     lastName: r.last_name,
     nameArabic: r.name_arabic,
+    gender: r.gender === 'F' ? 'F' : 'M',
     birthDate: r.birth_date,
     deathDate: r.death_date,
     isDeceased: !!r.is_deceased,

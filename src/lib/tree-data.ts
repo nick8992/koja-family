@@ -4,10 +4,13 @@ import { db } from '@/db';
 
 export type ClaimStatus = 'unclaimed' | 'pending' | 'approved' | 'rejected';
 
+export type Gender = 'M' | 'F';
+
 export type TreeNode = {
   id: number;
   fid: number | null;
   name: string;
+  gender: Gender;
   note: string | null;
   claim: ClaimStatus;
   isDeceased: boolean;
@@ -17,6 +20,7 @@ type Row = {
   id: number;
   father_id: number | null;
   first_name: string;
+  gender: string | null;
   notes: string | null;
   claim_status: ClaimStatus;
   is_deceased: boolean | null;
@@ -24,7 +28,7 @@ type Row = {
 
 export async function loadAllPersons(): Promise<TreeNode[]> {
   const rows = await db.execute<Row>(sql`
-    SELECT id, father_id, first_name, notes, is_deceased, claim_status
+    SELECT id, father_id, first_name, gender, notes, is_deceased, claim_status
     FROM person_with_claim
     ORDER BY id
   `);
@@ -33,6 +37,7 @@ export async function loadAllPersons(): Promise<TreeNode[]> {
     id: r.id,
     fid: r.father_id,
     name: r.first_name,
+    gender: r.gender === 'F' ? 'F' : 'M',
     note: r.notes,
     claim: r.claim_status,
     isDeceased: !!r.is_deceased,
