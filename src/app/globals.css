@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
+@theme {
+  --color-parchment: #f5f1ea;
+  --color-parchment-deep: #ebe4d7;
+  --color-parchment-shadow: #d9cfbd;
+  --color-cream: #fdfbf6;
+
+  --color-ink: #141e2e;
+  --color-ink-soft: #2a3a50;
+  --color-ink-muted: #6b7890;
+
+  --color-olive: #1e3a5f;
+  --color-olive-deep: #0f1f38;
+  --color-olive-light: #3a5a82;
+
+  --color-terracotta: #c26a3a;
+  --color-terracotta-deep: #9a4f22;
+
+  --color-gold: #c8a24a;
+  --color-gold-light: #e0bd68;
+
+  --color-border: #d4cab4;
+  --color-border-dark: #a89a7c;
+
+  --font-display: var(--font-fraunces), "Fraunces", ui-serif, Georgia, serif;
+  --font-body: var(--font-manrope), "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-arabic: var(--font-noto-naskh-arabic), "Noto Naskh Arabic", "Amiri", serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  background: var(--color-parchment);
+  color: var(--color-ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html[dir="rtl"] body {
+  font-family: var(--font-arabic);
+}
+
+html[dir="rtl"] .keep-ltr {
+  direction: ltr;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Parchment radial tint */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(ellipse at 10% 20%, rgba(30, 58, 95, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 80%, rgba(30, 58, 95, 0.07) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(194, 106, 58, 0.03) 0%, transparent 70%);
+  z-index: 1;
+}
+
+/* Parchment noise overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  z-index: 2;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/><feColorMatrix values='0 0 0 0 0.15 0 0 0 0 0.2 0 0 0 0 0.3 0 0 0 0.06 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+}
+
+#app-root {
+  position: relative;
+  z-index: 3;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fraunces optical sizing for headings */
+h1, h2, .display-face {
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 72, "SOFT" 50;
+}
+
+/* Display font utility */
+.font-display { font-family: var(--font-display); }
+.font-arabic  { font-family: var(--font-arabic); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-parchment-deep); }
+::-webkit-scrollbar-thumb { background: var(--color-border-dark); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-ink-muted); }
+
+/* Pulsing ring on focused tree node */
+@keyframes pulse-ring {
+  0%   { r: 10; opacity: 0.8; }
+  100% { r: 32; opacity: 0; }
+}
+.node-pulse {
+  fill: none;
+  stroke: var(--color-terracotta);
+  stroke-width: 2;
+  animation: pulse-ring 1.4s ease-out infinite;
+  pointer-events: none;
 }
