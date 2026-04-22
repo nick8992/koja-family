@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { sql } from 'drizzle-orm';
@@ -7,6 +8,7 @@ import { tServer } from '@/lib/i18n/server';
 import { approveClaimAction, rejectClaimAction } from '@/lib/admin-actions';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Admin' };
 
 type PendingClaim = {
   user_id: number;

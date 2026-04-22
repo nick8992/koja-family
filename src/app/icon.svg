@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#0f1f38" stroke="#c8a24a" stroke-width="3"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#0f1f38" stroke-width="2"/>
+  <text x="32" y="44" text-anchor="middle" fill="#e0bd68" font-family="Amiri, Serto Jerusalem, Noto Sans Syriac, serif" font-size="34" font-weight="700">ܩ</text>
+</svg>

@@ -127,6 +127,9 @@ export const I18N: Record<Lang, Dict> = {
     'notifications.sub': 'Likes, comments, and announcements from the family.',
     'notifications.empty': 'No notifications yet.',
 
+    'footer.copyright': 'The Koja Family',
+    'footer.request_addition': 'Request to be added',
+
     'events.title': 'Family Gatherings',
     'events.sub': 'Weddings, birthdays, reunions \u2014 everything that brings us together',
     'events.upcoming': 'Upcoming',
@@ -435,6 +438,9 @@ export const I18N: Record<Lang, Dict> = {
     'notifications.title': 'التنبيهات',
     'notifications.sub': 'الإعجابات والتعليقات والإعلانات من العائلة.',
     'notifications.empty': 'لا توجد تنبيهات بعد.',
+
+    'footer.copyright': 'عائلة كوجا',
+    'footer.request_addition': 'اطلب الإضافة',
 
     'events.title': 'لقاءات العائلة',
     'events.sub': 'أعراس، أعياد ميلاد، لقاءات \u2014 كلّ ما يجمعنا',

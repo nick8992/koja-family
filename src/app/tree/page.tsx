@@ -1,9 +1,11 @@
+import type { Metadata } from 'next';
 import { auth } from '@/auth';
 import { loadAllPersons } from '@/lib/tree-data';
 import { tServer } from '@/lib/i18n/server';
 import { FamilyTree } from '@/components/FamilyTree';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Family Tree' };
 
 export default async function TreePage() {
   const nodes = await loadAllPersons();

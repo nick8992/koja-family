@@ -7,6 +7,7 @@ import { db } from '@/db';
 import { getLanguage } from '@/lib/i18n/server';
 import { LanguageProvider } from '@/lib/i18n/context';
 import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 import { loadUnreadCount } from '@/lib/notifications';
 
 const fraunces = Fraunces({
@@ -31,8 +32,27 @@ const notoArabic = Noto_Naskh_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: 'Koja Family',
-  description: 'A private gathering place for the descendants of Hanna Koja.',
+  metadataBase: new URL('https://kojafamily.com'),
+  title: {
+    default: 'Koja Family',
+    template: '%s · Koja Family',
+  },
+  description:
+    'A private gathering place for the descendants of Hanna Koja — seven generations, one lineage.',
+  openGraph: {
+    title: 'Koja Family',
+    description:
+      'A private gathering place for the descendants of Hanna Koja — seven generations, one lineage.',
+    url: 'https://kojafamily.com',
+    siteName: 'Koja Family',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Koja Family',
+    description:
+      'A private gathering place for the descendants of Hanna Koja.',
+  },
 };
 
 export const viewport: Viewport = {
@@ -119,6 +139,7 @@ export default async function RootLayout({
           <div id="app-root">
             <Header session={headerSession} />
             <main className="flex-1">{children}</main>
+            <Footer />
           </div>
         </LanguageProvider>
       </body>

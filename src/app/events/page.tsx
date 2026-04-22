@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { auth } from '@/auth';
 import { loadUpcomingEvents, type FamilyEvent } from '@/lib/event-data';
@@ -7,6 +8,7 @@ import { CreateEventModal } from '@/components/CreateEventModal';
 import { DeleteEventButton } from '@/components/DeleteEventButton';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Events' };
 
 function fmtEventTime(iso: string, lang: 'en' | 'ar'): string {
   const d = new Date(iso);

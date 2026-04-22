@@ -1,9 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { loadAllPersons } from '@/lib/tree-data';
 import { tServer } from '@/lib/i18n/server';
 import { RequestAdditionForm } from '@/components/RequestAdditionForm';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Request to be added' };
 
 export default async function RequestAdditionPage() {
   const nodes = await loadAllPersons();

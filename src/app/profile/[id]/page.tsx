@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/auth';
@@ -24,6 +25,15 @@ import { ProfilePhotoUpload } from '@/components/ProfilePhotoUpload';
 export const dynamic = 'force-dynamic';
 
 type Props = { params: Promise<{ id: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id: idStr } = await params;
+  const id = Number(idStr);
+  if (!Number.isInteger(id) || id < 1) return { title: 'Profile' };
+  const p = await getPerson(id);
+  if (!p) return { title: 'Profile' };
+  return { title: p.firstName };
+}
 
 function fmtField(v: string | null | undefined, lang: 'en' | 'ar'): string {
   if (v == null || v === '') return translate(lang, 'profile.not_set');

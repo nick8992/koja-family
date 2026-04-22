@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { auth } from '@/auth';
 import { loadAllPersons } from '@/lib/tree-data';
@@ -14,6 +15,7 @@ import {
 } from '@/components/DeletePostButton';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Feed' };
 
 type Viewer = {
   userId: number | null;

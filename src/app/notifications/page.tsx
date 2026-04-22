@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
@@ -10,6 +11,7 @@ import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Notifications' };
 
 function fmtTime(iso: string, lang: 'en' | 'ar'): string {
   const then = new Date(iso).getTime();

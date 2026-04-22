@@ -1,8 +1,10 @@
+import type { Metadata } from 'next';
 import { loadAllPersons } from '@/lib/tree-data';
 import { tServer } from '@/lib/i18n/server';
 import { RelationsCalculator } from '@/components/RelationsCalculator';
 
 export const dynamic = 'force-dynamic';
+export const metadata: Metadata = { title: 'Relations' };
 
 export default async function RelationsPage() {
   const nodes = await loadAllPersons();
