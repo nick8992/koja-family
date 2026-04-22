@@ -42,7 +42,9 @@ export function layoutTree(
   }
 
   const isVert = mode === 'vertical';
-  const SIBLING_GAP = isVert ? 40 : 22;
+  // Vertical: siblings spread on X, so their labels are stacked side-by-side.
+  // 60px handles the longest leaf names (Christopher, Alesandro, Lesandro, …).
+  const SIBLING_GAP = isVert ? 60 : 22;
   const GEN_GAP = isVert ? 110 : 170;
 
   const pos = new Map<number, LayoutPos>();
