@@ -442,6 +442,12 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
                     fill="var(--color-ink)"
                   >
                     {n.name}
+                    {/* Deceased cross — easy to revert by deleting this block. */}
+                    {n.isDeceased ? (
+                      <tspan dx={4} fill="var(--color-ink-muted)">
+                        &dagger;
+                      </tspan>
+                    ) : null}
                   </text>
                   <text
                     x={idX}
@@ -468,6 +474,10 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
           <div className="mt-1.5 border-t border-dotted border-border pt-1.5">
             <LegendRow swatch="var(--color-ink-muted)" label={t('tree.legend.male')} />
             <LegendRow swatch="var(--color-ink-muted)" shape="diamond" label={t('tree.legend.female')} />
+            <div className="flex items-center gap-2 py-0.5">
+              <span className="block h-3 w-3 text-center leading-none text-ink-muted">†</span>
+              <span>{t('tree.legend.deceased')}</span>
+            </div>
           </div>
         </div>
 
