@@ -19,6 +19,7 @@ import { translate } from '@/lib/i18n/dictionary';
 import { AddChildButton } from '@/components/AddChildButton';
 import { ClaimButton } from '@/components/ClaimButton';
 import { EditableField } from '@/components/EditableField';
+import { ProfilePhotoUpload } from '@/components/ProfilePhotoUpload';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,6 +121,12 @@ export default async function ProfilePage({ params }: Props) {
           >
             {person.profilePhotoUrl ? null : initial}
           </div>
+          {canEditHere ? (
+            <ProfilePhotoUpload
+              personId={person.id}
+              hasPhoto={!!person.profilePhotoUrl}
+            />
+          ) : null}
         </div>
 
         <div className="relative">

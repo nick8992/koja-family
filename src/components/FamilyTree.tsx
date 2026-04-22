@@ -374,6 +374,18 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
             {links.map((l) => (
               <path key={l.id} className="tree-link" d={l.d} stroke="var(--color-border-dark)" strokeWidth={1} fill="none" opacity={0.6} />
             ))}
+            {/* ClipPaths for photo nodes — one per node that has a photo. */}
+            <defs>
+              {nodes.map((n) => {
+                const p = layout.positions.get(n.id);
+                if (!p || !n.photoUrl) return null;
+                return (
+                  <clipPath id={`photo-clip-${n.id}`} key={n.id}>
+                    <circle cx={p.x} cy={p.y} r={9} />
+                  </clipPath>
+                );
+              })}
+            </defs>
             {/* Nodes */}
             {nodes.map((n) => {
               const p = layout.positions.get(n.id);
@@ -390,6 +402,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
                 : claimed
                 ? 'var(--color-olive-deep)'
                 : 'var(--color-border-dark)';
+              const ringStroke = isSelf ? 'var(--color-terracotta-deep)' : 'var(--color-gold)';
               const isVert = mode === 'vertical';
               const labelX = isVert ? p.x : p.x + 13;
               const labelY = isVert ? p.y + 22 : p.y + 4;
@@ -417,7 +430,30 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
                   }}
                   onMouseLeave={() => setTooltip(null)}
                 >
-                  {isFemale ? (
+                  {n.photoUrl ? (
+                    <>
+                      <circle cx={p.x} cy={p.y} r={9} fill={fill} stroke={ringStroke} strokeWidth={1.5} />
+                      <image
+                        href={n.photoUrl}
+                        x={p.x - 9}
+                        y={p.y - 9}
+                        width={18}
+                        height={18}
+                        clipPath={`url(#photo-clip-${n.id})`}
+                        preserveAspectRatio="xMidYMid slice"
+                        pointerEvents="none"
+                      />
+                      <circle
+                        cx={p.x}
+                        cy={p.y}
+                        r={9}
+                        fill="none"
+                        stroke={ringStroke}
+                        strokeWidth={1.5}
+                        pointerEvents="none"
+                      />
+                    </>
+                  ) : isFemale ? (
                     <rect
                       x={p.x - 7}
                       y={p.y - 7}

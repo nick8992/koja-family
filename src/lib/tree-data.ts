@@ -14,6 +14,7 @@ export type TreeNode = {
   note: string | null;
   claim: ClaimStatus;
   isDeceased: boolean;
+  photoUrl: string | null;
 };
 
 type Row = {
@@ -24,11 +25,12 @@ type Row = {
   notes: string | null;
   claim_status: ClaimStatus;
   is_deceased: boolean | null;
+  profile_photo_url: string | null;
 };
 
 export async function loadAllPersons(): Promise<TreeNode[]> {
   const rows = await db.execute<Row>(sql`
-    SELECT id, father_id, first_name, gender, notes, is_deceased, claim_status
+    SELECT id, father_id, first_name, gender, notes, is_deceased, claim_status, profile_photo_url
     FROM person_with_claim
     ORDER BY id
   `);
@@ -41,6 +43,7 @@ export async function loadAllPersons(): Promise<TreeNode[]> {
     note: r.notes,
     claim: r.claim_status,
     isDeceased: !!r.is_deceased,
+    photoUrl: r.profile_photo_url,
   }));
 }
 
