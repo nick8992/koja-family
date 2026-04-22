@@ -442,13 +442,20 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
                     fill="var(--color-ink)"
                   >
                     {n.name}
-                    {/* Deceased cross — easy to revert by deleting this block. */}
-                    {n.isDeceased ? (
-                      <tspan dx={4} fill="var(--color-ink-muted)">
-                        &dagger;
-                      </tspan>
-                    ) : null}
                   </text>
+                  {/* Deceased cross at the node's top-right corner — easy to revert. */}
+                  {n.isDeceased ? (
+                    <text
+                      x={p.x + 7}
+                      y={p.y - 5}
+                      fontSize={10}
+                      fontWeight={600}
+                      fill="var(--color-ink-muted)"
+                      style={{ pointerEvents: 'none', userSelect: 'none' }}
+                    >
+                      &dagger;
+                    </text>
+                  ) : null}
                   <text
                     x={idX}
                     y={idY}
