@@ -65,6 +65,7 @@ export function ProfilePhotoUpload({ personId, hasPhoto }: Props) {
 
   async function onRemove() {
     if (busy) return;
+    if (!window.confirm(t('photo.remove.confirm'))) return;
     setBusy(true);
     setError(null);
     try {
