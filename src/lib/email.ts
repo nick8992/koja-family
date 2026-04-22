@@ -106,6 +106,46 @@ export async function sendClaimWelcome(args: {
   });
 }
 
+export async function sendClaimReminderAdmin(args: {
+  kind: '24h' | '1wk';
+  claimantDisplayName: string;
+  claimantEmail: string;
+  personId: number;
+  personFullName: string;
+  ageHours: number;
+  siteOrigin: string;
+}): Promise<void> {
+  const ageLabel =
+    args.kind === '24h'
+      ? 'over 24 hours ago'
+      : `about ${Math.round(args.ageHours / 24)} days ago`;
+  await sendSafe({
+    to: adminNotify,
+    subject:
+      args.kind === '24h'
+        ? `Koja Family: 24-hour reminder — ${args.claimantDisplayName}`
+        : `Koja Family: 1-week reminder — ${args.claimantDisplayName}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#141e2e; max-width:540px">
+        <h2 style="font-family: Georgia, serif; font-weight: 500; color:#0f1f38">Claim still awaiting your review</h2>
+        <p><strong>${escapeHtml(args.claimantDisplayName)}</strong>
+          claimed the spot of <strong>${escapeHtml(args.personFullName)}</strong>
+          (<code>#${args.personId}</code>) <strong>${ageLabel}</strong>
+          and is still waiting.</p>
+        <table style="margin-top:12px; font-size:14px">
+          <tr><td style="padding:4px 12px 4px 0; color:#6b7890">Email</td><td>${escapeHtml(args.claimantEmail)}</td></tr>
+        </table>
+        <p style="margin-top:20px">
+          <a href="${args.siteOrigin}/admin"
+             style="display:inline-block; padding:10px 20px; background:#0f1f38; color:#fdfbf6; text-decoration:none; font-family: Georgia, serif">
+             Review claim \u2192
+          </a>
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendClaimApproved(args: {
   to: string;
   displayName: string;
