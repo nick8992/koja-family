@@ -13,8 +13,22 @@ export type PhotoUploadState =
   | { status: 'ok'; url: string }
   | { status: 'error'; message: string };
 
-const MAX_BYTES = 5 * 1024 * 1024; // 5MB (enforced client-side + here)
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_BYTES = 8 * 1024 * 1024; // 8MB server limit (after client compression)
+// The client always re-encodes to WebP before upload, so that's the
+// common-case type. Keep a few others allowed in case client-side
+// compression had to bail out on an unusual source format.
+const ALLOWED_TYPES = new Set([
+  'image/webp',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/heic',
+  'image/heif',
+  'image/gif',
+  'image/bmp',
+  'image/tiff',
+  '', // some iOS Safari / screenshot flows report an empty type
+]);
 
 async function requireSessionUser(): Promise<SessionUser> {
   const session = await auth();

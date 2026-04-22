@@ -32,7 +32,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
   const { t } = useLanguage();
   const router = useRouter();
 
-  const [mode, setMode] = useState<LayoutMode>('vertical');
+  const [mode, setMode] = useState<LayoutMode>('horizontal');
   const [search, setSearch] = useState('');
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [tooltip, setTooltip] = useState<{ id: number; x: number; y: number } | null>(null);
@@ -109,13 +109,23 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
     return () => window.removeEventListener('resize', onResize);
   }, [fitToView]);
 
-  // Pan + zoom
+  // Pan + zoom (mouse + touch)
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
     let dragging = false;
     let lastX = 0;
     let lastY = 0;
+
+    // Pinch-zoom baseline captured on two-finger touchstart.
+    let pinch: {
+      baseDist: number;
+      baseScale: number;
+      baseTx: number;
+      baseTy: number;
+      cx: number;
+      cy: number;
+    } | null = null;
 
     const onMouseDown = (e: MouseEvent) => {
       dragging = true;
@@ -147,15 +157,84 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
       applyTransform();
     };
 
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 1) {
+        dragging = true;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+        pinch = null;
+      } else if (e.touches.length === 2) {
+        dragging = false;
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dx = t2.clientX - t1.clientX;
+        const dy = t2.clientY - t1.clientY;
+        const rect = container.getBoundingClientRect();
+        pinch = {
+          baseDist: Math.hypot(dx, dy) || 1,
+          baseScale: transformRef.current.scale,
+          baseTx: transformRef.current.tx,
+          baseTy: transformRef.current.ty,
+          cx: (t1.clientX + t2.clientX) / 2 - rect.left,
+          cy: (t1.clientY + t2.clientY) / 2 - rect.top,
+        };
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      // Prevent the page from scrolling when the user pans the tree.
+      if (e.cancelable) e.preventDefault();
+      if (pinch && e.touches.length === 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dx = t2.clientX - t1.clientX;
+        const dy = t2.clientY - t1.clientY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const ratio = dist / pinch.baseDist;
+        transformRef.current.scale = pinch.baseScale * ratio;
+        transformRef.current.tx = pinch.cx - (pinch.cx - pinch.baseTx) * ratio;
+        transformRef.current.ty = pinch.cy - (pinch.cy - pinch.baseTy) * ratio;
+        applyTransform();
+      } else if (dragging && e.touches.length === 1) {
+        const t = e.touches[0];
+        transformRef.current.tx += t.clientX - lastX;
+        transformRef.current.ty += t.clientY - lastY;
+        lastX = t.clientX;
+        lastY = t.clientY;
+        applyTransform();
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        dragging = false;
+        pinch = null;
+      } else if (e.touches.length === 1 && pinch) {
+        // Lifted one finger mid-pinch — fall back to single-finger pan.
+        pinch = null;
+        dragging = true;
+        lastX = e.touches[0].clientX;
+        lastY = e.touches[0].clientY;
+      }
+    };
+
     container.addEventListener('mousedown', onMouseDown);
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
     container.addEventListener('wheel', onWheel, { passive: false });
+    container.addEventListener('touchstart', onTouchStart, { passive: true });
+    container.addEventListener('touchmove', onTouchMove, { passive: false });
+    container.addEventListener('touchend', onTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', onTouchEnd, { passive: true });
     return () => {
       container.removeEventListener('mousedown', onMouseDown);
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
       container.removeEventListener('wheel', onWheel);
+      container.removeEventListener('touchstart', onTouchStart);
+      container.removeEventListener('touchmove', onTouchMove);
+      container.removeEventListener('touchend', onTouchEnd);
+      container.removeEventListener('touchcancel', onTouchEnd);
     };
   }, [applyTransform]);
 
@@ -362,10 +441,11 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
       {/* CANVAS */}
       <div
         ref={containerRef}
-        className="relative h-[720px] cursor-grab overflow-hidden border border-[var(--color-border-dark)] select-none"
+        className="relative h-[600px] cursor-grab overflow-hidden border border-[var(--color-border-dark)] select-none md:h-[720px]"
         style={{
           background: 'linear-gradient(var(--color-parchment) 0%, var(--color-parchment-deep) 100%)',
           boxShadow: 'inset 0 0 60px rgba(20, 30, 46, 0.1)',
+          touchAction: 'none',
         }}
       >
         <svg ref={svgRef} className="h-full w-full">
