@@ -24,7 +24,7 @@ export const I18N: Record<Lang, Dict> = {
       'A private gathering place for the descendants of Hanna Koja — seven generations, {n} names, one lineage.',
     'home.hero.expand':
       'Help us expand and more accurately present the family by adding the female children of your parents and grandparents to the tree, as well as your own children who are not yet added.',
-    'home.hero.not_on_tree': 'Not yourself on the tree?',
+    'home.hero.not_on_tree': 'If you\u2019re not yet on the tree,',
     'home.hero.request_link': 'Request to be added →',
     'home.hero.cta1': 'Find Your Place',
     'home.hero.cta2': 'Visit the Feed',
@@ -275,7 +275,7 @@ export const I18N: Record<Lang, Dict> = {
       'مكان خاص لأبناء وأحفاد حنّا كوجا — سبعة أجيال، {n} اسمًا، وسلالة واحدة.',
     'home.hero.expand':
       'ساعدنا في توسيع الشجرة وتمثيل العائلة بدقة أكبر من خلال إضافة الإناث من أبناء آبائك وأجدادك، وكذلك أبنائك الذين لم يُضافوا بعد.',
-    'home.hero.not_on_tree': 'لست موجودًا على الشجرة؟',
+    'home.hero.not_on_tree': 'إذا لم تكن على الشجرة بعد،',
     'home.hero.request_link': 'اطلب الإضافة ←',
     'home.hero.cta1': 'اعثر على مكانك',
     'home.hero.cta2': 'تصفّح المنشورات',
