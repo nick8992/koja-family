@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import type { SessionUser } from './permissions';
+import { fanOutAnnouncementNotifications } from './notifications';
 
 async function requireSessionUser(): Promise<SessionUser> {
   const session = await auth();
@@ -100,6 +101,29 @@ export async function createEventAction(
   } catch (err) {
     console.error('[event] create tx failed:', err);
     return { status: 'error', message: 'generic' };
+  }
+
+  // Fan out an announcement notification for approved creators. Same rule
+  // as announcement posts — unapproved creators' events are only visible
+  // to themselves so there's nothing to notify the family about.
+  if (user.approved && user.personId) {
+    try {
+      const personRows = await db.execute<{ first_name: string }>(
+        sql`SELECT first_name FROM persons WHERE id = ${user.personId} LIMIT 1`
+      );
+      const actor = (personRows as unknown as { first_name: string }[])[0];
+      if (actor) {
+        await fanOutAnnouncementNotifications({
+          actorUserId: Number(user.id),
+          actorPersonId: user.personId,
+          actorFirstName: actor.first_name,
+          bodyPreview: title,
+          link: '/events',
+        });
+      }
+    } catch (err) {
+      console.warn('[notifications] event fan-out failed:', err);
+    }
   }
 
   revalidatePath('/events');

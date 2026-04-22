@@ -13,6 +13,7 @@ type Session = {
   role: 'member' | 'admin';
   personId: number | null;
   photoUrl: string | null;
+  unreadNotifications: number;
 } | null;
 
 const NAV = [
@@ -183,6 +184,32 @@ function AuthSide({ session }: { session: NonNullable<Session> }) {
   const { t } = useLanguage();
   return (
     <div className="flex items-center gap-2 border-s border-border ps-2 sm:ps-3">
+      <Link
+        href="/notifications"
+        aria-label={t('nav.notifications')}
+        title={t('nav.notifications')}
+        className="relative flex h-8 w-8 items-center justify-center rounded-full text-ink-soft hover:text-terracotta-deep sm:h-9 sm:w-9"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M10 2a4.5 4.5 0 0 0-4.5 4.5c0 2.5-.75 4.5-1.75 5.5h12.5c-1-1-1.75-3-1.75-5.5A4.5 4.5 0 0 0 10 2Z" />
+          <path d="M8 15a2 2 0 0 0 4 0" />
+        </svg>
+        {session.unreadNotifications > 0 ? (
+          <span className="absolute -top-0.5 end-0 inline-flex min-w-[16px] items-center justify-center rounded-full bg-terracotta px-1 text-[10px] font-semibold leading-4 text-cream">
+            {session.unreadNotifications > 9 ? '9+' : session.unreadNotifications}
+          </span>
+        ) : null}
+      </Link>
       {session.personId ? (
         <Link
           href={`/profile/${session.personId}`}

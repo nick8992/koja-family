@@ -7,6 +7,7 @@ import { db } from '@/db';
 import { getLanguage } from '@/lib/i18n/server';
 import { LanguageProvider } from '@/lib/i18n/context';
 import { Header } from '@/components/Header';
+import { loadUnreadCount } from '@/lib/notifications';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -58,6 +59,7 @@ export default async function RootLayout({
     role: 'member' | 'admin';
     personId: number | null;
     photoUrl: string | null;
+    unreadNotifications: number;
   } | null = null;
 
   if (session?.user) {
@@ -84,12 +86,25 @@ export default async function RootLayout({
       if (arr[0]?.first_name) displayName = arr[0].first_name;
       photoUrl = arr[0]?.profile_photo_url ?? null;
     }
+    let unread = 0;
+    if (session.user) {
+      const userId = Number((session.user as { id?: string }).id ?? 0);
+      if (userId) {
+        try {
+          unread = await loadUnreadCount(userId);
+        } catch (err) {
+          console.warn('[layout] loadUnreadCount failed:', err);
+        }
+      }
+    }
+
     headerSession = {
       email: u.email ?? '',
       displayName,
       role: u.role ?? 'member',
       personId: u.personId ?? null,
       photoUrl,
+      unreadNotifications: unread,
     };
   }
 

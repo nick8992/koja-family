@@ -5,6 +5,24 @@ import { sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import type { SessionUser } from './permissions';
+import {
+  fanOutAnnouncementNotifications,
+  notifyPostLike,
+  notifyPostComment,
+} from './notifications';
+
+async function actorPersonInfo(user: SessionUser): Promise<{
+  personId: number;
+  firstName: string;
+} | null> {
+  if (!user.personId) return null;
+  const rows = await db.execute<{ first_name: string }>(
+    sql`SELECT first_name FROM persons WHERE id = ${user.personId} LIMIT 1`
+  );
+  const row = (rows as unknown as { first_name: string }[])[0];
+  if (!row) return null;
+  return { personId: user.personId, firstName: row.first_name };
+}
 
 async function requireSessionUser(): Promise<SessionUser> {
   const session = await auth();
@@ -42,6 +60,25 @@ export async function createPostAction(
     INSERT INTO posts (author_user_id, body, kind)
     VALUES (${Number(user.id)}, ${body}, ${kind})
   `);
+
+  // Fan out notifications only for announcements from approved users.
+  // Unapproved users' announcements are invisible to others anyway, so
+  // don't spam inboxes about a pending post.
+  if (kind === 'announcement' && user.approved) {
+    try {
+      const actor = await actorPersonInfo(user);
+      if (actor) {
+        await fanOutAnnouncementNotifications({
+          actorUserId: Number(user.id),
+          actorPersonId: actor.personId,
+          actorFirstName: actor.firstName,
+          bodyPreview: body,
+        });
+      }
+    } catch (err) {
+      console.warn('[notifications] announcement fan-out failed:', err);
+    }
+  }
 
   revalidatePath('/feed');
   revalidatePath('/');
@@ -104,6 +141,24 @@ export async function createCommentAction(
     VALUES (${postId}, ${Number(user.id)}, ${body})
   `);
 
+  // Notify the post author (if they're not the commenter).
+  if (user.approved) {
+    try {
+      const actor = await actorPersonInfo(user);
+      if (actor) {
+        await notifyPostComment({
+          postId,
+          actorUserId: Number(user.id),
+          actorPersonId: actor.personId,
+          actorFirstName: actor.firstName,
+          commentBody: body,
+        });
+      }
+    } catch (err) {
+      console.warn('[notifications] comment notify failed:', err);
+    }
+  }
+
   revalidatePath('/feed');
   return { status: 'ok' };
 }
@@ -128,7 +183,8 @@ export async function toggleLikeAction(formData: FormData): Promise<void> {
   const existing = await db.execute<{ id: number }>(
     sql`SELECT id FROM post_likes WHERE post_id = ${postId} AND user_id = ${Number(user.id)}`
   );
-  if ((existing as unknown as unknown[]).length > 0) {
+  const wasLiked = (existing as unknown as unknown[]).length > 0;
+  if (wasLiked) {
     await db.execute(sql`
       DELETE FROM post_likes WHERE post_id = ${postId} AND user_id = ${Number(user.id)}
     `);
@@ -138,6 +194,22 @@ export async function toggleLikeAction(formData: FormData): Promise<void> {
       VALUES (${postId}, ${Number(user.id)})
       ON CONFLICT (post_id, user_id) DO NOTHING
     `);
+    // Notify the post author on new likes only (not on unlike).
+    if (user.approved) {
+      try {
+        const actor = await actorPersonInfo(user);
+        if (actor) {
+          await notifyPostLike({
+            postId,
+            actorUserId: Number(user.id),
+            actorPersonId: actor.personId,
+            actorFirstName: actor.firstName,
+          });
+        }
+      } catch (err) {
+        console.warn('[notifications] like notify failed:', err);
+      }
+    }
   }
 
   revalidatePath('/feed');

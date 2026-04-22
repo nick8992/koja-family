@@ -17,6 +17,7 @@ export const I18N: Record<Lang, Dict> = {
     'nav.admin': 'Admin',
     'nav.login': 'Sign in',
     'nav.logout': 'Sign out',
+    'nav.notifications': 'Notifications',
 
     'home.hero.title': 'The House of Koja',
     'home.hero.arabic': 'بيت كوجا',
@@ -121,6 +122,10 @@ export const I18N: Record<Lang, Dict> = {
 
     'home.feed.empty': 'No posts yet. The feed is quiet.',
     'home.events.empty': 'No upcoming events scheduled.',
+
+    'notifications.title': 'Notifications',
+    'notifications.sub': 'Likes, comments, and announcements from the family.',
+    'notifications.empty': 'No notifications yet.',
 
     'events.title': 'Family Gatherings',
     'events.sub': 'Weddings, birthdays, reunions \u2014 everything that brings us together',
@@ -321,6 +326,7 @@ export const I18N: Record<Lang, Dict> = {
     'nav.admin': 'الإدارة',
     'nav.login': 'تسجيل الدخول',
     'nav.logout': 'تسجيل الخروج',
+    'nav.notifications': 'التنبيهات',
 
     'home.hero.title': 'بيت كوجا',
     'home.hero.arabic': 'بيت كوجا',
@@ -425,6 +431,10 @@ export const I18N: Record<Lang, Dict> = {
 
     'home.feed.empty': 'لا توجد منشورات بعد. المنشورات هادئة.',
     'home.events.empty': 'لا توجد مناسبات قادمة.',
+
+    'notifications.title': 'التنبيهات',
+    'notifications.sub': 'الإعجابات والتعليقات والإعلانات من العائلة.',
+    'notifications.empty': 'لا توجد تنبيهات بعد.',
 
     'events.title': 'لقاءات العائلة',
     'events.sub': 'أعراس، أعياد ميلاد، لقاءات \u2014 كلّ ما يجمعنا',

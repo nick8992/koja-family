@@ -156,6 +156,27 @@ export const posts = pgTable(
   ]
 );
 
+export const notifications = pgTable(
+  'notifications',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    kind: varchar('kind', { length: 30 }).notNull(),
+    message: text('message').notNull(),
+    link: text('link'),
+    actorPersonId: integer('actor_person_id').references(() => persons.id, {
+      onDelete: 'set null',
+    }),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (t) => [
+    index('idx_notifications_inbox').on(t.userId, t.readAt, t.createdAt),
+  ]
+);
+
 export const postLikes = pgTable(
   'post_likes',
   {
