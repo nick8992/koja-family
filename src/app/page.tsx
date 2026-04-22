@@ -1,7 +1,11 @@
 import Link from 'next/link';
 import { sql } from 'drizzle-orm';
+import { auth } from '@/auth';
 import { db } from '@/db';
-import { tServer } from '@/lib/i18n/server';
+import { loadFeed } from '@/lib/feed-data';
+import { loadUpcomingEvents } from '@/lib/event-data';
+import { getLanguage, tServer } from '@/lib/i18n/server';
+import { translate } from '@/lib/i18n/dictionary';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +33,14 @@ async function loadStats(): Promise<Stats> {
 }
 
 export default async function HomePage() {
-  const stats = await loadStats();
+  const session = await auth();
+  const viewerUserId = session?.user?.id ? Number(session.user.id) : null;
+  const lang = await getLanguage();
+  const [stats, feed, events] = await Promise.all([
+    loadStats(),
+    loadFeed(viewerUserId, 3),
+    loadUpcomingEvents(viewerUserId, 3),
+  ]);
 
   return (
     <>
@@ -105,11 +116,53 @@ export default async function HomePage() {
           <p className="font-display mb-8 italic text-ink-muted">
             {await tServer('home.feed.sub')}
           </p>
-          <div className="rounded-sm border border-border bg-cream p-8 text-center">
-            <p className="font-display italic text-ink-muted">
-              {await tServer('home.feed.coming_soon')}
-            </p>
-          </div>
+          {feed.posts.length === 0 ? (
+            <div className="rounded-sm border border-border bg-cream p-8 text-center">
+              <p className="font-display italic text-ink-muted">
+                {await tServer('home.feed.empty')}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {feed.posts.map((post) => (
+                <Link
+                  key={post.id}
+                  href="/feed"
+                  className="block border border-border bg-cream p-5 transition-shadow hover:shadow-md"
+                >
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-gold font-display text-sm font-semibold text-cream"
+                      style={{
+                        background: post.author.photoUrl
+                          ? `url(${post.author.photoUrl}) center/cover`
+                          : 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))',
+                      }}
+                    >
+                      {post.author.photoUrl ? null : post.author.firstName[0]?.toUpperCase()}
+                    </span>
+                    <span className="font-display text-sm font-semibold text-ink">
+                      {post.author.firstName}
+                    </span>
+                    <span className="ms-auto font-display text-xs text-ink-muted">
+                      {new Date(post.createdAt).toLocaleDateString(
+                        lang === 'ar' ? 'ar' : 'en'
+                      )}
+                    </span>
+                  </div>
+                  <p className="mt-3 line-clamp-3 text-[14px] leading-relaxed text-ink-soft">
+                    {post.body}
+                  </p>
+                </Link>
+              ))}
+              <Link
+                href="/feed"
+                className="font-display self-start text-sm italic text-terracotta-deep hover:underline"
+              >
+                {await tServer('home.feed.more')}
+              </Link>
+            </div>
+          )}
         </div>
         <aside>
           <div className="font-display mb-2 flex items-center gap-4 text-3xl font-medium text-ink">
@@ -119,11 +172,45 @@ export default async function HomePage() {
           <p className="font-display mb-8 italic text-ink-muted">
             {await tServer('home.events.sub')}
           </p>
-          <div className="rounded-sm border border-border bg-cream p-6 text-center">
-            <p className="font-display italic text-ink-muted">
-              {await tServer('home.events.coming_soon')}
-            </p>
-          </div>
+          {events.length === 0 ? (
+            <div className="rounded-sm border border-border bg-cream p-6 text-center">
+              <p className="font-display italic text-ink-muted">
+                {await tServer('home.events.empty')}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {events.map((ev) => {
+                const d = new Date(ev.startsAt);
+                return (
+                  <Link
+                    key={ev.id}
+                    href="/events"
+                    className="flex gap-3 border border-border bg-cream p-3.5 transition-colors hover:border-terracotta"
+                  >
+                    <div className="flex w-14 shrink-0 flex-col items-center justify-center bg-olive-deep px-1 py-2 text-cream">
+                      <div className="font-display text-[10px] uppercase tracking-[1.5px] text-gold-light">
+                        {d.toLocaleString(lang === 'ar' ? 'ar' : 'en', { month: 'short' })}
+                      </div>
+                      <div className="font-display text-2xl font-medium leading-none">
+                        {d.getDate()}
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-display truncate text-base font-medium text-ink">
+                        {ev.title}
+                      </div>
+                      {ev.location ? (
+                        <div className="truncate text-xs text-ink-muted">
+                          {ev.location}
+                        </div>
+                      ) : null}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
 
           <div className="font-display mb-2 mt-10 flex items-center gap-4 text-3xl font-medium text-ink">
             {await tServer('home.stats.title')}

@@ -1,0 +1,141 @@
+import 'server-only';
+import { sql } from 'drizzle-orm';
+import { db } from '@/db';
+
+export type PostKind = 'general' | 'story' | 'business' | 'announcement';
+
+export type FeedPost = {
+  id: number;
+  body: string;
+  kind: PostKind;
+  createdAt: string;
+  author: {
+    userId: number;
+    personId: number;
+    firstName: string;
+    photoUrl: string | null;
+    approved: boolean;
+  };
+  pendingForViewer: boolean;
+};
+
+export type FeedComment = {
+  id: number;
+  postId: number;
+  body: string;
+  createdAt: string;
+  author: {
+    userId: number;
+    personId: number;
+    firstName: string;
+    photoUrl: string | null;
+    approved: boolean;
+  };
+  pendingForViewer: boolean;
+};
+
+type PostRow = {
+  id: number;
+  body: string;
+  kind: PostKind;
+  created_at: string;
+  author_user_id: number;
+  author_person_id: number;
+  author_first_name: string;
+  author_photo_url: string | null;
+  author_approved: boolean;
+};
+
+type CommentRow = {
+  id: number;
+  post_id: number;
+  body: string;
+  created_at: string;
+  author_user_id: number;
+  author_person_id: number;
+  author_first_name: string;
+  author_photo_url: string | null;
+  author_approved: boolean;
+};
+
+/**
+ * Silent-limited-access feed. Approved authors' posts show to everyone;
+ * an unapproved author sees only their own post in the feed (others don't
+ * see it at all).
+ */
+export async function loadFeed(
+  viewerUserId: number | null,
+  limit = 60
+): Promise<{ posts: FeedPost[]; commentsByPost: Map<number, FeedComment[]> }> {
+  const viewer = viewerUserId ?? 0;
+  const postRows = await db.execute<PostRow>(sql`
+    SELECT p.id, p.body, p.kind, p.created_at,
+           p.author_user_id,
+           u.person_id                AS author_person_id,
+           per.first_name             AS author_first_name,
+           per.profile_photo_url      AS author_photo_url,
+           (u.approved_at IS NOT NULL) AS author_approved
+      FROM posts p
+      JOIN users u   ON u.id  = p.author_user_id
+      JOIN persons per ON per.id = u.person_id
+     WHERE p.deleted_at IS NULL
+       AND (u.approved_at IS NOT NULL OR p.author_user_id = ${viewer})
+     ORDER BY p.created_at DESC
+     LIMIT ${limit}
+  `);
+  const posts = (postRows as unknown as PostRow[]).map((r) => ({
+    id: r.id,
+    body: r.body,
+    kind: r.kind,
+    createdAt: r.created_at,
+    author: {
+      userId: r.author_user_id,
+      personId: r.author_person_id,
+      firstName: r.author_first_name,
+      photoUrl: r.author_photo_url,
+      approved: !!r.author_approved,
+    },
+    pendingForViewer:
+      !r.author_approved && r.author_user_id === viewerUserId,
+  }));
+
+  const commentsByPost = new Map<number, FeedComment[]>();
+  if (posts.length === 0) return { posts, commentsByPost };
+
+  const postIds = posts.map((p) => p.id);
+  const commentRows = await db.execute<CommentRow>(sql`
+    SELECT c.id, c.post_id, c.body, c.created_at,
+           c.author_user_id,
+           u.person_id                AS author_person_id,
+           per.first_name             AS author_first_name,
+           per.profile_photo_url      AS author_photo_url,
+           (u.approved_at IS NOT NULL) AS author_approved
+      FROM comments c
+      JOIN users u   ON u.id  = c.author_user_id
+      JOIN persons per ON per.id = u.person_id
+     WHERE c.deleted_at IS NULL
+       AND c.post_id = ANY(${postIds})
+       AND (u.approved_at IS NOT NULL OR c.author_user_id = ${viewer})
+     ORDER BY c.created_at ASC
+  `);
+  for (const r of commentRows as unknown as CommentRow[]) {
+    const list = commentsByPost.get(r.post_id) ?? [];
+    list.push({
+      id: r.id,
+      postId: r.post_id,
+      body: r.body,
+      createdAt: r.created_at,
+      author: {
+        userId: r.author_user_id,
+        personId: r.author_person_id,
+        firstName: r.author_first_name,
+        photoUrl: r.author_photo_url,
+        approved: !!r.author_approved,
+      },
+      pendingForViewer: !r.author_approved && r.author_user_id === viewerUserId,
+    });
+    commentsByPost.set(r.post_id, list);
+  }
+
+  return { posts, commentsByPost };
+}

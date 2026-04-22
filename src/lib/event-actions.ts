@@ -1,0 +1,89 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { sql } from 'drizzle-orm';
+import { auth } from '@/auth';
+import { db } from '@/db';
+import type { SessionUser } from './permissions';
+
+async function requireSessionUser(): Promise<SessionUser> {
+  const session = await auth();
+  const u = session?.user as SessionUser | undefined;
+  if (!u || !u.id) throw new Error('not_signed_in');
+  return u;
+}
+
+export type CreateEventState =
+  | { status: 'idle' }
+  | { status: 'ok' }
+  | { status: 'error'; message: string };
+
+export async function createEventAction(
+  _prev: CreateEventState,
+  formData: FormData
+): Promise<CreateEventState> {
+  let user: SessionUser;
+  try {
+    user = await requireSessionUser();
+  } catch {
+    return { status: 'error', message: 'not_signed_in' };
+  }
+  if (!user.approved && user.role !== 'admin') {
+    return { status: 'error', message: 'forbidden' };
+  }
+
+  const title = String(formData.get('title') ?? '').trim();
+  if (title.length < 1 || title.length > 200) {
+    return { status: 'error', message: 'bad_title' };
+  }
+  const startsAtStr = String(formData.get('startsAt') ?? '').trim();
+  if (!startsAtStr) return { status: 'error', message: 'bad_starts_at' };
+  const startsAt = new Date(startsAtStr);
+  if (Number.isNaN(startsAt.getTime())) {
+    return { status: 'error', message: 'bad_starts_at' };
+  }
+  const endsAtStr = String(formData.get('endsAt') ?? '').trim();
+  let endsAt: Date | null = null;
+  if (endsAtStr) {
+    const d = new Date(endsAtStr);
+    if (Number.isNaN(d.getTime())) {
+      return { status: 'error', message: 'bad_ends_at' };
+    }
+    endsAt = d;
+  }
+  const location = String(formData.get('location') ?? '').trim() || null;
+  const description = String(formData.get('description') ?? '').trim() || null;
+
+  await db.execute(sql`
+    INSERT INTO events (creator_user_id, title, description, starts_at, ends_at, location)
+    VALUES (
+      ${Number(user.id)},
+      ${title},
+      ${description},
+      ${startsAt.toISOString()}::timestamptz,
+      ${endsAt ? endsAt.toISOString() : null}::timestamptz,
+      ${location}
+    )
+  `);
+
+  revalidatePath('/events');
+  revalidatePath('/');
+  return { status: 'ok' };
+}
+
+export async function deleteEventAction(formData: FormData): Promise<void> {
+  const user = await requireSessionUser();
+  const eventId = Number(formData.get('eventId'));
+  if (!Number.isInteger(eventId) || eventId < 1) return;
+
+  const rows = await db.execute<{ creator_user_id: number }>(sql`
+    SELECT creator_user_id FROM events WHERE id = ${eventId} AND deleted_at IS NULL
+  `);
+  const ev = (rows as unknown as { creator_user_id: number }[])[0];
+  if (!ev) return;
+  if (ev.creator_user_id !== Number(user.id) && user.role !== 'admin') return;
+
+  await db.execute(sql`UPDATE events SET deleted_at = NOW() WHERE id = ${eventId}`);
+  revalidatePath('/events');
+  revalidatePath('/');
+}
