@@ -54,19 +54,56 @@ export async function createEventAction(
   const location = String(formData.get('location') ?? '').trim() || null;
   const description = String(formData.get('description') ?? '').trim() || null;
 
-  await db.execute(sql`
-    INSERT INTO events (creator_user_id, title, description, starts_at, ends_at, location)
-    VALUES (
-      ${Number(user.id)},
-      ${title},
-      ${description},
-      ${startsAt.toISOString()}::timestamptz,
-      ${endsAt ? endsAt.toISOString() : null}::timestamptz,
-      ${location}
-    )
-  `);
+  // Creating an event also posts an announcement to the feed so the family
+  // sees it scrolling by, not only on the /events page. Both writes happen
+  // in one transaction so a feed-post failure won't leave a silent event.
+  const whenLabel = startsAt.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+  const bodyLines = [
+    title,
+    '',
+    `When: ${whenLabel}`,
+  ];
+  if (location) bodyLines.push(`Where: ${location}`);
+  if (description) {
+    bodyLines.push('');
+    bodyLines.push(description);
+  }
+  bodyLines.push('');
+  bodyLines.push('See the full event → /events');
+  const postBody = bodyLines.join('\n');
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`
+        INSERT INTO events (creator_user_id, title, description, starts_at, ends_at, location)
+        VALUES (
+          ${Number(user.id)},
+          ${title},
+          ${description},
+          ${startsAt.toISOString()}::timestamptz,
+          ${endsAt ? endsAt.toISOString() : null}::timestamptz,
+          ${location}
+        )
+      `);
+      await tx.execute(sql`
+        INSERT INTO posts (author_user_id, body, kind)
+        VALUES (${Number(user.id)}, ${postBody}, 'announcement')
+      `);
+    });
+  } catch (err) {
+    console.error('[event] create tx failed:', err);
+    return { status: 'error', message: 'generic' };
+  }
 
   revalidatePath('/events');
+  revalidatePath('/feed');
   revalidatePath('/');
   return { status: 'ok' };
 }

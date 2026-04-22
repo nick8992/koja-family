@@ -156,6 +156,24 @@ export const posts = pgTable(
   ]
 );
 
+export const postLikes = pgTable(
+  'post_likes',
+  {
+    id: serial('id').primaryKey(),
+    postId: bigint('post_id', { mode: 'number' })
+      .notNull()
+      .references(() => posts.id, { onDelete: 'cascade' }),
+    userId: integer('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('post_likes_unique').on(t.postId, t.userId),
+    index('idx_post_likes_post').on(t.postId),
+  ]
+);
+
 export const comments = pgTable(
   'comments',
   {

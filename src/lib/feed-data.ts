@@ -17,6 +17,8 @@ export type FeedPost = {
     approved: boolean;
   };
   pendingForViewer: boolean;
+  likeCount: number;
+  viewerLiked: boolean;
 };
 
 export type FeedComment = {
@@ -44,6 +46,8 @@ type PostRow = {
   author_first_name: string;
   author_photo_url: string | null;
   author_approved: boolean;
+  like_count: number;
+  viewer_liked: boolean;
 };
 
 type CommentRow = {
@@ -74,7 +78,9 @@ export async function loadFeed(
            u.person_id                AS author_person_id,
            per.first_name             AS author_first_name,
            per.profile_photo_url      AS author_photo_url,
-           (u.approved_at IS NOT NULL) AS author_approved
+           (u.approved_at IS NOT NULL) AS author_approved,
+           (SELECT COUNT(*)::int FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
+           EXISTS (SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ${viewer}) AS viewer_liked
       FROM posts p
       JOIN users u   ON u.id  = p.author_user_id
       JOIN persons per ON per.id = u.person_id
@@ -97,6 +103,8 @@ export async function loadFeed(
     },
     pendingForViewer:
       !r.author_approved && r.author_user_id === viewerUserId,
+    likeCount: Number(r.like_count ?? 0),
+    viewerLiked: !!r.viewer_liked,
   }));
 
   const commentsByPost = new Map<number, FeedComment[]>();

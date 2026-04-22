@@ -7,6 +7,7 @@ import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { PostComposer } from '@/components/PostComposer';
 import { CommentForm } from '@/components/CommentForm';
+import { LikeButton } from '@/components/LikeButton';
 import {
   DeletePostButton,
   DeleteCommentButton,
@@ -240,13 +241,17 @@ function PostCard({
         {post.body}
       </p>
 
-      {canDelete ? (
-        <div className="mt-3 flex justify-end">
-          <DeletePostButton postId={post.id} />
-        </div>
-      ) : null}
+      <div className="mt-3 flex items-center justify-between gap-4 border-t border-dotted border-border pt-2">
+        <LikeButton
+          postId={post.id}
+          likeCount={post.likeCount}
+          viewerLiked={post.viewerLiked}
+          signedIn={viewer.userId != null}
+        />
+        {canDelete ? <DeletePostButton postId={post.id} /> : <span />}
+      </div>
 
-      <div className="mt-4 border-t border-dotted border-border pt-3">
+      <div className="mt-3 pt-2">
         {comments.length === 0 ? (
           <p className="font-display text-xs italic text-ink-muted">
             {labels.noComments}

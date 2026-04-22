@@ -108,6 +108,42 @@ export async function createCommentAction(
   return { status: 'ok' };
 }
 
+export async function toggleLikeAction(formData: FormData): Promise<void> {
+  let user: SessionUser;
+  try {
+    user = await requireSessionUser();
+  } catch {
+    return;
+  }
+  const postId = Number(formData.get('postId'));
+  if (!Number.isInteger(postId) || postId < 1) return;
+
+  // Make sure the post exists and isn't deleted
+  const postRows = await db.execute<{ id: number }>(
+    sql`SELECT id FROM posts WHERE id = ${postId} AND deleted_at IS NULL`
+  );
+  if ((postRows as unknown as unknown[]).length === 0) return;
+
+  // Toggle: if the row exists, delete; otherwise insert.
+  const existing = await db.execute<{ id: number }>(
+    sql`SELECT id FROM post_likes WHERE post_id = ${postId} AND user_id = ${Number(user.id)}`
+  );
+  if ((existing as unknown as unknown[]).length > 0) {
+    await db.execute(sql`
+      DELETE FROM post_likes WHERE post_id = ${postId} AND user_id = ${Number(user.id)}
+    `);
+  } else {
+    await db.execute(sql`
+      INSERT INTO post_likes (post_id, user_id)
+      VALUES (${postId}, ${Number(user.id)})
+      ON CONFLICT (post_id, user_id) DO NOTHING
+    `);
+  }
+
+  revalidatePath('/feed');
+  revalidatePath('/');
+}
+
 export async function deleteCommentAction(formData: FormData): Promise<void> {
   const user = await requireSessionUser();
   const commentId = Number(formData.get('commentId'));
