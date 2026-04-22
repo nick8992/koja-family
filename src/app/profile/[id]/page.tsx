@@ -17,6 +17,7 @@ import { relationship } from '@/lib/relationships';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { AddChildButton } from '@/components/AddChildButton';
+import { ClaimButton } from '@/components/ClaimButton';
 import { EditableField } from '@/components/EditableField';
 
 export const dynamic = 'force-dynamic';
@@ -164,15 +165,21 @@ export default async function ProfilePage({ params }: Props) {
             >
               {await tServer('profile.action.claimed')}
             </button>
-          ) : (
+          ) : sessionUser ? (
             <button
               type="button"
               disabled
-              className="font-display cursor-not-allowed rounded-sm border border-olive-deep bg-olive-deep px-4 py-1.5 text-sm text-cream opacity-70"
-              title="Claim flow ships next checkpoint"
+              title="Sign out to claim a different spot"
+              className="font-display rounded-sm border border-[var(--color-border-dark)] px-4 py-1.5 text-sm opacity-60"
             >
               {await tServer('profile.action.claim')}
             </button>
+          ) : (
+            <ClaimButton
+              personId={person.id}
+              initialFirstName={person.firstName}
+              fullName={fullName}
+            />
           )}
           {canAddChildHere ? (
             <AddChildButton
