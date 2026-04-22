@@ -101,13 +101,10 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
     fitToView();
   }, [fitToView]);
 
-  useEffect(() => {
-    function onResize() {
-      fitToView();
-    }
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, [fitToView]);
+  // Deliberately NOT fitting on window resize. Mobile browsers fire resize
+  // when their URL bar shows/hides during scrolling and that resets the
+  // user's pan/zoom. Initial fit happens above; mode changes re-fit via
+  // the dependency on `fitToView`. User can tap Reset to re-fit manually.
 
   // Pan + zoom (mouse + touch)
   useEffect(() => {
@@ -452,7 +449,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
           <g ref={gRef}>
             {/* Links */}
             {links.map((l) => (
-              <path key={l.id} className="tree-link" d={l.d} stroke="var(--color-border-dark)" strokeWidth={1} fill="none" opacity={0.6} />
+              <path key={l.id} className="tree-link" d={l.d} stroke="var(--color-border-dark)" strokeWidth={1.75} fill="none" opacity={0.75} />
             ))}
             {/* ClipPaths for photo nodes — one per node that has a photo. */}
             <defs>

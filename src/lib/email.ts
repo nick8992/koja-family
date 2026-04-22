@@ -170,6 +170,43 @@ export async function sendClaimApproved(args: {
   });
 }
 
+export async function sendAdditionRequest(args: {
+  firstName: string;
+  gender: 'M' | 'F' | null;
+  fatherName: string;
+  fatherId: number;
+  fatherFullName: string;
+  requesterEmail: string;
+  requesterNote: string | null;
+  siteOrigin: string;
+}): Promise<void> {
+  await sendSafe({
+    to: adminNotify,
+    subject: `Koja Family: request to add ${args.firstName}`,
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#141e2e; max-width:540px">
+        <h2 style="font-family: Georgia, serif; font-weight: 500; color:#0f1f38">New request to be added to the tree</h2>
+        <table style="margin-top:12px; font-size:14px">
+          <tr><td style="padding:4px 12px 4px 0; color:#6b7890">First name</td><td><strong>${escapeHtml(args.firstName)}</strong></td></tr>
+          ${args.gender ? `<tr><td style="padding:4px 12px 4px 0; color:#6b7890">Gender</td><td>${args.gender === 'F' ? 'Female' : 'Male'}</td></tr>` : ''}
+          <tr><td style="padding:4px 12px 4px 0; color:#6b7890; vertical-align:top">Father</td><td>${escapeHtml(args.fatherName)} <code>#${args.fatherId}</code><br><span style="color:#6b7890; font-size:12px">${escapeHtml(args.fatherFullName)}</span></td></tr>
+          <tr><td style="padding:4px 12px 4px 0; color:#6b7890">Requester email</td><td>${escapeHtml(args.requesterEmail)}</td></tr>
+          ${args.requesterNote ? `<tr><td style="padding:4px 12px 4px 0; color:#6b7890; vertical-align:top">Note</td><td style="white-space:pre-wrap">${escapeHtml(args.requesterNote)}</td></tr>` : ''}
+        </table>
+        <p style="margin-top:20px">
+          <a href="${args.siteOrigin}/profile/${args.fatherId}"
+             style="display:inline-block; padding:10px 20px; background:#0f1f38; color:#fdfbf6; text-decoration:none; font-family: Georgia, serif">
+             Open father\u2019s profile \u2192
+          </a>
+        </p>
+        <p style="margin-top:16px; font-size:12px; color:#6b7890">
+          On the father's profile you can click "Add a child" to add the person directly.
+        </p>
+      </div>
+    `,
+  });
+}
+
 function escapeHtml(s: string): string {
   return s
     .replaceAll('&', '&amp;')

@@ -57,8 +57,20 @@ export default async function HomePage() {
         <p className="font-arabic mb-6 text-3xl text-terracotta-deep" dir="rtl">
           {await tServer('home.hero.arabic')}
         </p>
-        <p className="font-display mx-auto mb-10 max-w-2xl text-xl italic leading-relaxed text-ink-muted">
-          {await tServer('home.hero.tagline')}
+        <p className="font-display mx-auto mb-5 max-w-2xl text-xl italic leading-relaxed text-ink-muted">
+          {await tServer('home.hero.tagline', { n: stats.total })}
+        </p>
+        <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+          {await tServer('home.hero.expand')}{' '}
+          <span className="italic text-ink-muted">
+            {await tServer('home.hero.not_on_tree')}
+          </span>{' '}
+          <Link
+            href="/request-addition"
+            className="font-medium not-italic text-terracotta-deep underline-offset-4 hover:underline"
+          >
+            {await tServer('home.hero.request_link')}
+          </Link>
         </p>
         <div className="inline-flex gap-3">
           <Link

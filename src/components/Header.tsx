@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { useLanguage } from '@/lib/i18n/context';
 import { logoutAction } from '@/lib/auth-actions';
 import { LanguageToggle } from './LanguageToggle';
@@ -30,13 +31,21 @@ function navIsActive(pathname: string, href: string): boolean {
 export function Header({ session }: { session: Session }) {
   const { t } = useLanguage();
   const pathname = usePathname() || '/';
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isAdmin = session?.role === 'admin';
 
   return (
     <header className="sticky top-0 z-40 border-b-2 border-[var(--color-border-dark)] bg-parchment-deep shadow-sm">
-      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-8 px-8 py-4">
-        <Link href="/" className="flex items-center gap-3.5">
+      <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-3 px-4 py-3 sm:gap-6 sm:px-6 md:gap-8 md:px-8 md:py-4">
+        {/* Brand */}
+        <Link
+          href="/"
+          className="flex min-w-0 items-center gap-2.5 sm:gap-3"
+          onClick={() => setMenuOpen(false)}
+        >
           <span
-            className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-gold text-xl text-gold-light"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-gold text-lg text-gold-light sm:h-10 sm:w-10 md:h-11 md:w-11 md:text-xl"
             style={{
               background: 'var(--color-olive-deep)',
               boxShadow: 'inset 0 0 0 2px var(--color-olive-deep), 0 2px 8px rgba(0,0,0,0.2)',
@@ -45,112 +54,171 @@ export function Header({ session }: { session: Session }) {
           >
             ܩ
           </span>
-          <span className="flex flex-col leading-none">
-            <span className="font-display text-2xl font-semibold tracking-wide text-ink">
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="font-display truncate text-lg font-semibold tracking-wide text-ink sm:text-xl md:text-2xl">
               {t('brand.title')}
             </span>
-            <span className="font-arabic mt-1 text-xs tracking-widest text-ink-muted">
+            <span className="font-arabic hidden text-xs tracking-widest text-ink-muted md:inline">
               ܒܝܬܐ ܕܩܘܓܐ
             </span>
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1">
-          <div className="hidden items-center gap-1 md:flex">
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-1 md:flex">
+          {NAV.map((item) => {
+            const active = navIsActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={
+                  'relative rounded-sm px-3 py-2 font-display text-[16px] font-medium tracking-wide transition-colors lg:px-4 lg:text-[17px] ' +
+                  (active ? 'text-olive-deep' : 'text-ink-soft hover:text-terracotta-deep')
+                }
+              >
+                {t(item.key)}
+                {active ? (
+                  <span className="absolute bottom-0.5 left-3 right-3 h-0.5 bg-terracotta lg:left-4 lg:right-4" />
+                ) : null}
+              </Link>
+            );
+          })}
+          {isAdmin ? (
+            <Link
+              href="/admin"
+              className={
+                'relative rounded-sm px-3 py-2 font-display text-[16px] font-medium tracking-wide transition-colors lg:px-4 lg:text-[17px] ' +
+                (navIsActive(pathname, '/admin')
+                  ? 'text-olive-deep'
+                  : 'text-ink-soft hover:text-terracotta-deep')
+              }
+            >
+              {t('nav.admin')}
+              {navIsActive(pathname, '/admin') ? (
+                <span className="absolute bottom-0.5 left-3 right-3 h-0.5 bg-terracotta lg:left-4 lg:right-4" />
+              ) : null}
+            </Link>
+          ) : null}
+        </nav>
+
+        {/* Right cluster: lang + auth + mobile hamburger */}
+        <div className="flex shrink-0 items-center gap-2">
+          <LanguageToggle />
+
+          {session ? (
+            <AuthSide session={session} />
+          ) : (
+            <Link
+              href="/login"
+              className="font-display text-sm font-medium text-ink-soft hover:text-terracotta-deep"
+            >
+              {t('nav.login')}
+            </Link>
+          )}
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            aria-label="Open menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-[var(--color-border-dark)] text-ink-soft transition-colors hover:bg-parchment md:hidden"
+          >
+            {menuOpen ? (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M3 3l10 10M13 3L3 13" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M2 4h12M2 8h12M2 12h12" />
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      {menuOpen ? (
+        <div className="border-t border-border bg-parchment-deep md:hidden">
+          <nav className="mx-auto flex max-w-[1400px] flex-col px-4 py-2">
             {NAV.map((item) => {
               const active = navIsActive(pathname, item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={() => setMenuOpen(false)}
                   className={
-                    'relative rounded-sm px-4 py-2 font-display text-[17px] font-medium tracking-wide transition-colors ' +
-                    (active
-                      ? 'text-olive-deep'
-                      : 'text-ink-soft hover:text-terracotta-deep')
+                    'font-display border-b border-dotted border-border px-2 py-3 text-base font-medium transition-colors ' +
+                    (active ? 'text-olive-deep' : 'text-ink-soft hover:text-terracotta-deep')
                   }
                 >
                   {t(item.key)}
-                  {active ? (
-                    <span className="absolute bottom-0.5 left-4 right-4 h-0.5 bg-terracotta" />
-                  ) : null}
                 </Link>
               );
             })}
-            {session?.role === 'admin' ? (
+            {isAdmin ? (
               <Link
                 href="/admin"
+                onClick={() => setMenuOpen(false)}
                 className={
-                  'relative rounded-sm px-4 py-2 font-display text-[17px] font-medium tracking-wide transition-colors ' +
+                  'font-display border-b border-dotted border-border px-2 py-3 text-base font-medium transition-colors ' +
                   (navIsActive(pathname, '/admin')
                     ? 'text-olive-deep'
                     : 'text-ink-soft hover:text-terracotta-deep')
                 }
               >
                 {t('nav.admin')}
-                {navIsActive(pathname, '/admin') ? (
-                  <span className="absolute bottom-0.5 left-4 right-4 h-0.5 bg-terracotta" />
-                ) : null}
               </Link>
             ) : null}
-          </div>
-
-          <LanguageToggle />
-
-          {session ? (
-            <div className="ms-2 flex items-center gap-2.5 border-s border-border ps-4">
-              {session.personId ? (
-                <Link
-                  href={`/profile/${session.personId}`}
-                  className="flex items-center gap-2.5"
-                  title="Your profile"
-                >
-                  <span
-                    className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-gold bg-center bg-cover font-display text-sm font-semibold text-cream"
-                    style={{
-                      background: session.photoUrl
-                        ? `url(${session.photoUrl}) center/cover`
-                        : 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))',
-                    }}
-                  >
-                    {session.photoUrl ? null : session.displayName[0]?.toUpperCase()}
-                  </span>
-                  <span className="font-display text-sm text-ink-soft hidden hover:text-terracotta-deep sm:inline">
-                    {session.displayName}
-                  </span>
-                </Link>
-              ) : (
-                <>
-                  <span
-                    className="flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-gold font-display text-sm font-semibold text-cream"
-                    style={{ background: 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))' }}
-                  >
-                    {session.displayName[0]?.toUpperCase()}
-                  </span>
-                  <span className="font-display text-sm text-ink-soft hidden sm:inline">
-                    {session.displayName}
-                  </span>
-                </>
-              )}
-              <form action={logoutAction} className="ms-1">
-                <button
-                  type="submit"
-                  className="font-display text-xs text-ink-muted hover:text-terracotta-deep"
-                >
-                  {t('nav.logout')}
-                </button>
-              </form>
-            </div>
-          ) : (
-            <Link
-              href="/login"
-              className="ms-2 font-display text-sm font-medium text-ink-soft hover:text-terracotta-deep"
-            >
-              {t('nav.login')}
-            </Link>
-          )}
-        </nav>
-      </div>
+          </nav>
+        </div>
+      ) : null}
     </header>
+  );
+}
+
+function AuthSide({ session }: { session: NonNullable<Session> }) {
+  const { t } = useLanguage();
+  return (
+    <div className="flex items-center gap-2 border-s border-border ps-2 sm:ps-3">
+      {session.personId ? (
+        <Link
+          href={`/profile/${session.personId}`}
+          className="flex items-center gap-2"
+          title="Your profile"
+        >
+          <span
+            className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-gold font-display text-sm font-semibold text-cream sm:h-9 sm:w-9"
+            style={{
+              background: session.photoUrl
+                ? `url(${session.photoUrl}) center/cover`
+                : 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))',
+            }}
+          >
+            {session.photoUrl ? null : session.displayName[0]?.toUpperCase()}
+          </span>
+          <span className="font-display hidden text-sm text-ink-soft hover:text-terracotta-deep sm:inline">
+            {session.displayName}
+          </span>
+        </Link>
+      ) : (
+        <span
+          className="flex h-8 w-8 items-center justify-center rounded-full border-[1.5px] border-gold font-display text-sm font-semibold text-cream sm:h-9 sm:w-9"
+          style={{ background: 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))' }}
+        >
+          {session.displayName[0]?.toUpperCase()}
+        </span>
+      )}
+      <form action={logoutAction}>
+        <button
+          type="submit"
+          className="font-display text-xs text-ink-muted hover:text-terracotta-deep"
+        >
+          {t('nav.logout')}
+        </button>
+      </form>
+    </div>
   );
 }

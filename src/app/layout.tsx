@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Fraunces, Manrope, Noto_Naskh_Arabic } from 'next/font/google';
 import { sql } from 'drizzle-orm';
 import './globals.css';
@@ -32,6 +32,15 @@ const notoArabic = Noto_Naskh_Arabic({
 export const metadata: Metadata = {
   title: 'Koja Family',
   description: 'A private gathering place for the descendants of Hanna Koja.',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  // Allow user pinch-zoom for accessibility, but don't carry in-page pinch
+  // state between navigations (e.g. from /tree to /profile/X).
+  maximumScale: 5,
+  viewportFit: 'cover',
 };
 
 export default async function RootLayout({
