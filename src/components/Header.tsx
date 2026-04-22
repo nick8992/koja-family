@@ -6,7 +6,13 @@ import { useLanguage } from '@/lib/i18n/context';
 import { logoutAction } from '@/lib/auth-actions';
 import { LanguageToggle } from './LanguageToggle';
 
-type Session = { email: string; displayName: string; role: 'member' | 'admin' } | null;
+type Session = {
+  email: string;
+  displayName: string;
+  role: 'member' | 'admin';
+  personId: number | null;
+  photoUrl: string | null;
+} | null;
 
 const NAV = [
   { key: 'nav.home', href: '/' },
@@ -93,15 +99,39 @@ export function Header({ session }: { session: Session }) {
 
           {session ? (
             <div className="ms-2 flex items-center gap-2.5 border-s border-border ps-4">
-              <span
-                className="flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-gold font-display text-sm font-semibold text-cream"
-                style={{ background: 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))' }}
-              >
-                {session.displayName[0]?.toUpperCase()}
-              </span>
-              <span className="font-display text-sm text-ink-soft hidden sm:inline">
-                {session.displayName}
-              </span>
+              {session.personId ? (
+                <Link
+                  href={`/profile/${session.personId}`}
+                  className="flex items-center gap-2.5"
+                  title="Your profile"
+                >
+                  <span
+                    className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-gold bg-center bg-cover font-display text-sm font-semibold text-cream"
+                    style={{
+                      background: session.photoUrl
+                        ? `url(${session.photoUrl}) center/cover`
+                        : 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))',
+                    }}
+                  >
+                    {session.photoUrl ? null : session.displayName[0]?.toUpperCase()}
+                  </span>
+                  <span className="font-display text-sm text-ink-soft hidden hover:text-terracotta-deep sm:inline">
+                    {session.displayName}
+                  </span>
+                </Link>
+              ) : (
+                <>
+                  <span
+                    className="flex h-9 w-9 items-center justify-center rounded-full border-[1.5px] border-gold font-display text-sm font-semibold text-cream"
+                    style={{ background: 'linear-gradient(135deg, var(--color-olive), var(--color-olive-deep))' }}
+                  >
+                    {session.displayName[0]?.toUpperCase()}
+                  </span>
+                  <span className="font-display text-sm text-ink-soft hidden sm:inline">
+                    {session.displayName}
+                  </span>
+                </>
+              )}
               <form action={logoutAction} className="ms-1">
                 <button
                   type="submit"

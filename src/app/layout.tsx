@@ -47,6 +47,8 @@ export default async function RootLayout({
     email: string;
     displayName: string;
     role: 'member' | 'admin';
+    personId: number | null;
+    photoUrl: string | null;
   } | null = null;
 
   if (session?.user) {
@@ -59,19 +61,26 @@ export default async function RootLayout({
     };
     // The JWT snapshotted the user's first_name at login time; pull the
     // latest value so the header updates immediately when the user edits
-    // their own name.
+    // their own name (or uploads a new photo).
     let displayName = u.displayName || u.name || u.email || '';
+    let photoUrl: string | null = null;
     if (u.personId) {
-      const rows = await db.execute<{ first_name: string }>(
-        sql`SELECT first_name FROM persons WHERE id = ${u.personId} LIMIT 1`
+      const rows = await db.execute<{ first_name: string; profile_photo_url: string | null }>(
+        sql`SELECT first_name, profile_photo_url FROM persons WHERE id = ${u.personId} LIMIT 1`
       );
-      const arr = rows as unknown as { first_name: string }[];
+      const arr = rows as unknown as {
+        first_name: string;
+        profile_photo_url: string | null;
+      }[];
       if (arr[0]?.first_name) displayName = arr[0].first_name;
+      photoUrl = arr[0]?.profile_photo_url ?? null;
     }
     headerSession = {
       email: u.email ?? '',
       displayName,
       role: u.role ?? 'member',
+      personId: u.personId ?? null,
+      photoUrl,
     };
   }
 

@@ -110,7 +110,7 @@ export default async function ProfilePage({ params }: Props) {
           className="absolute inset-2 pointer-events-none border border-border"
           aria-hidden
         />
-        <div className="relative">
+        <div className="relative mx-auto h-36 w-36 md:mx-0">
           <div
             className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full border-[3px] border-gold font-display text-5xl font-medium text-cream shadow-lg"
             style={{
