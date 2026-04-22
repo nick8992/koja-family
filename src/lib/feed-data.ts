@@ -103,6 +103,13 @@ export async function loadFeed(
   if (posts.length === 0) return { posts, commentsByPost };
 
   const postIds = posts.map((p) => p.id);
+  // Build an explicit IN (...) clause — drizzle doesn't serialize a JS
+  // array as a native Postgres array literal, so ANY($array) fails with
+  // "malformed array literal". sql.join expands to a parameter per value.
+  const idList = sql.join(
+    postIds.map((id) => sql`${id}`),
+    sql`, `
+  );
   const commentRows = await db.execute<CommentRow>(sql`
     SELECT c.id, c.post_id, c.body, c.created_at,
            c.author_user_id,
@@ -114,7 +121,7 @@ export async function loadFeed(
       JOIN users u   ON u.id  = c.author_user_id
       JOIN persons per ON per.id = u.person_id
      WHERE c.deleted_at IS NULL
-       AND c.post_id = ANY(${postIds})
+       AND c.post_id IN (${idList})
        AND (u.approved_at IS NOT NULL OR c.author_user_id = ${viewer})
      ORDER BY c.created_at ASC
   `);
