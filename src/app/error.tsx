@@ -30,7 +30,14 @@ export default function GlobalError({
         Something broke
       </h1>
       <p className="font-display mt-3 text-base italic text-ink-muted">
-        This one&rsquo;s on us. Try again — if it keeps happening, let Nicholas know.
+        Try again — if it keeps happening, email{' '}
+        <a
+          href="mailto:admin@kojafamily.com"
+          className="not-italic text-terracotta-deep hover:underline"
+        >
+          admin@kojafamily.com
+        </a>
+        .
       </p>
       {error.digest ? (
         <p className="mt-2 font-mono text-xs text-ink-muted">
