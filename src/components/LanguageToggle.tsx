@@ -6,7 +6,7 @@ export function LanguageToggle() {
   const { lang, setLang } = useLanguage();
   return (
     <div
-      className="keep-ltr inline-flex overflow-hidden rounded-sm border border-[var(--color-border-dark)]"
+      className="keep-ltr inline-flex overflow-hidden rounded-sm border border-[var(--color-border-dark)] bg-cream shadow-sm"
       role="group"
       aria-label="Language"
     >
@@ -17,7 +17,7 @@ export function LanguageToggle() {
           'px-3 py-1.5 font-display text-xs font-medium tracking-wider transition-colors ' +
           (lang === 'en'
             ? 'bg-olive-deep text-cream'
-            : 'text-ink-muted hover:text-ink')
+            : 'bg-cream text-ink-soft hover:bg-parchment-deep')
         }
       >
         EN
@@ -29,7 +29,7 @@ export function LanguageToggle() {
           'font-arabic px-3 py-1.5 text-sm font-medium transition-colors ' +
           (lang === 'ar'
             ? 'bg-olive-deep text-cream'
-            : 'text-ink-muted hover:text-ink')
+            : 'bg-cream text-ink-soft hover:bg-parchment-deep')
         }
       >
         عربي

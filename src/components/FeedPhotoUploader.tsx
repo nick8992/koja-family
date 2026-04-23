@@ -14,9 +14,12 @@ type Props = {
   compact?: boolean;
 };
 
-const MAX_DIMENSION = 2000;
+// Keep a generous cap — mobile canvases can choke above ~4096 on older
+// hardware. If compression fails entirely we fall back to the raw file.
+const MAX_DIMENSION = 4096;
 const TARGET_TYPE = 'image/webp';
 const TARGET_QUALITY = 0.85;
+const MAX_UPLOAD_BYTES = 9 * 1024 * 1024; // leave headroom under the 10 MB server cap
 
 async function compressFeedImage(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
@@ -34,14 +37,41 @@ async function compressFeedImage(file: File): Promise<Blob> {
     .getContext('2d');
   if (!ctx) throw new Error('no_canvas_context');
   ctx.drawImage(bitmap, 0, 0, width, height);
-  if (canvas instanceof OffscreenCanvas) {
-    return await canvas.convertToBlob({ type: TARGET_TYPE, quality: TARGET_QUALITY });
+  const webp = await (async () => {
+    if (canvas instanceof OffscreenCanvas) {
+      return await canvas.convertToBlob({ type: TARGET_TYPE, quality: TARGET_QUALITY });
+    }
+    return await new Promise<Blob>((resolve, reject) => {
+      (canvas as HTMLCanvasElement).toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('toBlob_failed'))),
+        TARGET_TYPE,
+        TARGET_QUALITY
+      );
+    });
+  })();
+  // Some iOS Safari builds silently return an empty blob when asked for
+  // WebP. Treat that as a failure so the caller can fall back to JPEG.
+  if (!webp || webp.size === 0) throw new Error('empty_blob');
+  return webp;
+}
+
+async function encodeJpegFallback(file: File): Promise<Blob> {
+  const bitmap = await createImageBitmap(file);
+  let { width, height } = bitmap;
+  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+    const s = MAX_DIMENSION / Math.max(width, height);
+    width = Math.round(width * s);
+    height = Math.round(height * s);
   }
+  const canvas = Object.assign(document.createElement('canvas'), { width, height });
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('no_canvas_context');
+  ctx.drawImage(bitmap, 0, 0, width, height);
   return await new Promise<Blob>((resolve, reject) => {
-    (canvas as HTMLCanvasElement).toBlob(
+    canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('toBlob_failed'))),
-      TARGET_TYPE,
-      TARGET_QUALITY
+      'image/jpeg',
+      0.88
     );
   });
 }
@@ -64,12 +94,34 @@ export function FeedPhotoUploader({ value, onChange, max = 6, compact = false }:
     const accepted: UploadedPhoto[] = [];
     for (const file of files) {
       try {
-        const blob = await compressFeedImage(file);
+        let blob: Blob;
+        let filename = 'feed.webp';
+        let type = TARGET_TYPE;
+        try {
+          blob = await compressFeedImage(file);
+        } catch (compressErr) {
+          console.warn(
+            '[feed-photos] WebP compression failed, trying JPEG:',
+            compressErr
+          );
+          try {
+            blob = await encodeJpegFallback(file);
+            filename = 'feed.jpg';
+            type = 'image/jpeg';
+          } catch (jpegErr) {
+            console.warn(
+              '[feed-photos] JPEG fallback failed, using raw file:',
+              jpegErr
+            );
+            if (file.size > MAX_UPLOAD_BYTES) throw new Error('too_big');
+            blob = file;
+            filename = file.name || 'feed';
+            type = file.type || 'image/jpeg';
+          }
+        }
+        if (blob.size > MAX_UPLOAD_BYTES) throw new Error('too_big');
         const fd = new FormData();
-        fd.append(
-          'file',
-          new File([blob], 'feed.webp', { type: TARGET_TYPE })
-        );
+        fd.append('file', new File([blob], filename, { type }));
         const res = await uploadFeedPhotoAction({ status: 'idle' }, fd);
         if (res.status === 'ok') {
           accepted.push({
@@ -80,8 +132,12 @@ export function FeedPhotoUploader({ value, onChange, max = 6, compact = false }:
           setError(`photo.error.${res.message}`);
         }
       } catch (err) {
-        console.warn('[feed-photos] compress/upload failed:', err);
-        setError('photo.error.generic');
+        console.warn('[feed-photos] all strategies failed:', err);
+        setError(
+          err instanceof Error && err.message === 'too_big'
+            ? 'photo.error.too_big'
+            : 'photo.error.generic'
+        );
       }
     }
     if (accepted.length > 0) onChange([...value, ...accepted]);
