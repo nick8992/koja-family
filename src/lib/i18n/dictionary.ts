@@ -98,6 +98,7 @@ export const I18N: Record<Lang, Dict> = {
     'profile.note': 'Note',
     'profile.private': '(visible to approved family members)',
     'profile.field.birthYear': 'Year of birth',
+    'profile.field.deathYear': 'Year passed',
 
     'feed.title': 'The Feed',
     'feed.sub': 'Posts, stories, and news from across the family',
@@ -445,6 +446,7 @@ export const I18N: Record<Lang, Dict> = {
     'profile.note': 'ملاحظة',
     'profile.private': '(يظهر لأفراد العائلة المعتمَدين)',
     'profile.field.birthYear': 'سنة الميلاد',
+    'profile.field.deathYear': 'سنة الوفاة',
 
     'feed.title': 'المنشورات',
     'feed.sub': 'قصص وأخبار وإعلانات من جميع أفراد العائلة',

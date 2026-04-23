@@ -24,6 +24,7 @@ export const persons = pgTable(
     fatherId: integer('father_id').references((): AnyPgColumn => persons.id, {
       onDelete: 'set null',
     }),
+    siblingOrder: integer('sibling_order'),
     motherId: integer('mother_id').references((): AnyPgColumn => persons.id, {
       onDelete: 'set null',
     }),
@@ -36,6 +37,7 @@ export const persons = pgTable(
     gender: char('gender', { length: 1 }).default('M'),
     birthYear: integer('birth_year'),
     birthDate: date('birth_date'),
+    deathYear: integer('death_year'),
     deathDate: date('death_date'),
     isDeceased: boolean('is_deceased').default(false),
     birthplace: varchar('birthplace', { length: 200 }),

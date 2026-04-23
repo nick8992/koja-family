@@ -11,6 +11,7 @@ export type PersonRecord = {
   gender: 'M' | 'F';
   birthYear: number | null;
   birthDate: string | null;
+  deathYear: number | null;
   deathDate: string | null;
   isDeceased: boolean;
   birthplace: string | null;
@@ -34,6 +35,7 @@ type Row = {
   gender: string | null;
   birth_year: number | null;
   birth_date: string | null;
+  death_year: number | null;
   death_date: string | null;
   is_deceased: boolean | null;
   birthplace: string | null;
@@ -58,6 +60,7 @@ function rowToRecord(r: Row): PersonRecord {
     gender: r.gender === 'F' ? 'F' : 'M',
     birthYear: r.birth_year,
     birthDate: r.birth_date,
+    deathYear: r.death_year,
     deathDate: r.death_date,
     isDeceased: !!r.is_deceased,
     birthplace: r.birthplace,
@@ -93,6 +96,7 @@ const COLUMN_TO_KEY: Record<string, keyof PersonRecord> = {
   birthplace: 'birthplace',
   birth_year: 'birthYear',
   birth_date: 'birthDate',
+  death_year: 'deathYear',
   death_date: 'deathDate',
   is_deceased: 'isDeceased',
   occupation: 'occupation',
@@ -124,7 +128,7 @@ async function overlayPendingEdits(
     if (key === 'isDeceased' || key === 'phonePublic') {
       (out as unknown as Record<string, unknown>)[key] =
         new_value === 'true' || new_value === '1';
-    } else if (key === 'birthYear') {
+    } else if (key === 'birthYear' || key === 'deathYear') {
       const n = new_value == null ? null : Number(new_value);
       (out as unknown as Record<string, unknown>)[key] =
         Number.isFinite(n) ? n : null;
@@ -152,7 +156,9 @@ export async function getAncestors(id: number, rootFirst = false): Promise<Perso
 
 export async function getChildren(fatherId: number): Promise<PersonRecord[]> {
   const rows = await db.execute<Row>(sql`
-    SELECT * FROM person_with_claim WHERE father_id = ${fatherId} ORDER BY id
+    SELECT * FROM person_with_claim
+     WHERE father_id = ${fatherId}
+     ORDER BY COALESCE(sibling_order, id), id
   `);
   return (rows as unknown as Row[]).map(rowToRecord);
 }

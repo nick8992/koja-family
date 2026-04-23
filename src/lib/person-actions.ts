@@ -100,6 +100,7 @@ const EDITABLE_FIELDS: Record<string, FieldType> = {
   birthplace: 'text',
   birth_year: 'int',
   birth_date: 'date',
+  death_year: 'int',
   death_date: 'date',
   is_deceased: 'bool',
   occupation: 'text',
@@ -113,7 +114,12 @@ const EDITABLE_FIELDS: Record<string, FieldType> = {
 // for completeness. `is_deceased` + `death_date` are admin-only per
 // owner preference — marking someone deceased is a weighty call and
 // shouldn't be in the 3-gen edit window.
-const ADMIN_ONLY_FIELDS = new Set<string>(['notes', 'is_deceased', 'death_date']);
+const ADMIN_ONLY_FIELDS = new Set<string>([
+  'notes',
+  'is_deceased',
+  'death_date',
+  'death_year',
+]);
 
 function coerceForColumn(type: FieldType, raw: string): string | boolean | number | null {
   if (raw === '' || raw == null) return type === 'bool' ? false : null;

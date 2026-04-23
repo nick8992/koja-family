@@ -46,6 +46,10 @@ function fmtBirthYear(p: PersonRecord): string {
   return p.birthYear == null ? '' : String(p.birthYear);
 }
 
+function fmtDeathYear(p: PersonRecord): string {
+  return p.deathYear == null ? '' : String(p.deathYear);
+}
+
 export default async function ProfilePage({ params }: Props) {
   const { id: idStr } = await params;
   const id = Number(idStr);
@@ -255,15 +259,17 @@ export default async function ProfilePage({ params }: Props) {
             rawValue={person.firstName}
             editable={canEditHere}
           />
-          <EditableField
-            personId={id}
-            field="current_location"
-            type="location"
-            label={await tServer('profile.field.location')}
-            value={maskPrivate(fmtField(person.currentLocation))}
-            rawValue={person.currentLocation ?? ''}
-            editable={canEditHere}
-          />
+          {person.isDeceased ? null : (
+            <EditableField
+              personId={id}
+              field="current_location"
+              type="location"
+              label={await tServer('profile.field.location')}
+              value={maskPrivate(fmtField(person.currentLocation))}
+              rawValue={person.currentLocation ?? ''}
+              editable={canEditHere}
+            />
+          )}
           <EditableField
             personId={id}
             field="birth_year"
@@ -273,6 +279,18 @@ export default async function ProfilePage({ params }: Props) {
             rawValue={person.birthYear != null ? String(person.birthYear) : ''}
             editable={canEditHere}
           />
+          {person.isDeceased &&
+          (sessionUser?.role === 'admin' || person.deathYear != null) ? (
+            <EditableField
+              personId={id}
+              field="death_year"
+              type="year"
+              label={await tServer('profile.field.deathYear')}
+              value={fmtDeathYear(person)}
+              rawValue={person.deathYear != null ? String(person.deathYear) : ''}
+              editable={sessionUser?.role === 'admin'}
+            />
+          ) : null}
           <EditableField
             personId={id}
             field="occupation"
@@ -281,22 +299,26 @@ export default async function ProfilePage({ params }: Props) {
             rawValue={person.occupation ?? ''}
             editable={canEditHere}
           />
-          <EditableField
-            personId={id}
-            field="phone"
-            label={await tServer('profile.field.phone')}
-            value={maskPrivate(fmtField(person.phone))}
-            rawValue={person.phone ?? ''}
-            editable={canEditHere}
-          />
-          <EditableField
-            personId={id}
-            field="email"
-            label={await tServer('profile.field.email')}
-            value={maskPrivate(fmtField(person.email))}
-            rawValue={person.email ?? ''}
-            editable={canEditHere}
-          />
+          {person.isDeceased ? null : (
+            <EditableField
+              personId={id}
+              field="phone"
+              label={await tServer('profile.field.phone')}
+              value={maskPrivate(fmtField(person.phone))}
+              rawValue={person.phone ?? ''}
+              editable={canEditHere}
+            />
+          )}
+          {person.isDeceased ? null : (
+            <EditableField
+              personId={id}
+              field="email"
+              label={await tServer('profile.field.email')}
+              value={maskPrivate(fmtField(person.email))}
+              rawValue={person.email ?? ''}
+              editable={canEditHere}
+            />
+          )}
           {sessionUser?.role === 'admin' ? (
             <EditableField
               personId={id}

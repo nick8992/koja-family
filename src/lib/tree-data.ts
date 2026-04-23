@@ -32,7 +32,7 @@ export async function loadAllPersons(): Promise<TreeNode[]> {
   const rows = await db.execute<Row>(sql`
     SELECT id, father_id, first_name, gender, notes, is_deceased, claim_status, profile_photo_url
     FROM person_with_claim
-    ORDER BY id
+    ORDER BY COALESCE(sibling_order, id), id
   `);
 
   return (rows as unknown as Row[]).map((r) => ({
