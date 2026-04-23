@@ -135,6 +135,16 @@ export default async function RootLayout({
       dir={dir}
       className={`${fraunces.variable} ${manrope.variable} ${notoArabic.variable} h-full antialiased`}
     >
+      <head>
+        {/* Warm the TLS handshake with Supabase Storage before the first
+            image hits it, so feed photos start downloading immediately. */}
+        <link
+          rel="preconnect"
+          href="https://hshpfgwoqtrwdxzwlftv.supabase.co"
+          crossOrigin=""
+        />
+        <link rel="dns-prefetch" href="https://hshpfgwoqtrwdxzwlftv.supabase.co" />
+      </head>
       <body className="min-h-full">
         <LanguageProvider lang={lang}>
           <div id="app-root">

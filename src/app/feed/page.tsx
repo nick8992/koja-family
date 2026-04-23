@@ -139,7 +139,7 @@ export default async function FeedPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-5">
-          {feed.posts.map((post) => (
+          {feed.posts.map((post, i) => (
             <PostCard
               key={post.id}
               post={post}
@@ -147,6 +147,7 @@ export default async function FeedPage() {
               viewer={viewer}
               relLabelFor={relLabel}
               lang={lang}
+              isFirst={i === 0}
               labels={{
                 general: translate(lang, 'feed.kind.general'),
                 story: translate(lang, 'feed.kind.story'),
@@ -172,6 +173,7 @@ function PostCard({
   viewer,
   relLabelFor,
   lang,
+  isFirst,
   labels,
 }: {
   post: FeedPost;
@@ -179,6 +181,7 @@ function PostCard({
   viewer: Viewer;
   relLabelFor: (authorPersonId: number) => string | null;
   lang: 'en' | 'ar';
+  isFirst: boolean;
   labels: {
     general: string;
     story: string;
@@ -252,7 +255,9 @@ function PostCard({
           {post.body}
         </p>
       ) : null}
-      {post.photoUrls.length > 0 ? <PhotoGrid urls={post.photoUrls} /> : null}
+      {post.photoUrls.length > 0 ? (
+        <PhotoGrid urls={post.photoUrls} priority={isFirst} />
+      ) : null}
       {post.linkedEventId != null ? (
         <Link
           href={`/events/${post.linkedEventId}`}
