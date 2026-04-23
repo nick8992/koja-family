@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useLanguage } from '@/lib/i18n/context';
-import { uploadFeedPhotoAction } from '@/lib/photo-actions';
+import { createFeedPhotoUploadUrlAction } from '@/lib/photo-actions';
 
 export type UploadedPhoto = { id: string; url: string };
 
@@ -95,8 +95,7 @@ export function FeedPhotoUploader({ value, onChange, max = 6, compact = false }:
     for (const file of files) {
       try {
         let blob: Blob;
-        let filename = 'feed.webp';
-        let type = TARGET_TYPE;
+        let contentType = TARGET_TYPE;
         try {
           blob = await compressFeedImage(file);
         } catch (compressErr) {
@@ -106,8 +105,7 @@ export function FeedPhotoUploader({ value, onChange, max = 6, compact = false }:
           );
           try {
             blob = await encodeJpegFallback(file);
-            filename = 'feed.jpg';
-            type = 'image/jpeg';
+            contentType = 'image/jpeg';
           } catch (jpegErr) {
             console.warn(
               '[feed-photos] JPEG fallback failed, using raw file:',
@@ -115,22 +113,47 @@ export function FeedPhotoUploader({ value, onChange, max = 6, compact = false }:
             );
             if (file.size > MAX_UPLOAD_BYTES) throw new Error('too_big');
             blob = file;
-            filename = file.name || 'feed';
-            type = file.type || 'image/jpeg';
+            contentType = file.type || 'image/jpeg';
           }
         }
         if (blob.size > MAX_UPLOAD_BYTES) throw new Error('too_big');
+
+        // 1) Server action: authorize + return a Supabase signed upload URL.
         const fd = new FormData();
-        fd.append('file', new File([blob], filename, { type }));
-        const res = await uploadFeedPhotoAction({ status: 'idle' }, fd);
-        if (res.status === 'ok') {
-          accepted.push({
-            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            url: res.url,
-          });
-        } else if (res.status === 'error') {
-          setError(`photo.error.${res.message}`);
+        fd.append('contentType', contentType);
+        const issue = await createFeedPhotoUploadUrlAction({ status: 'idle' }, fd);
+        if (issue.status !== 'ok') {
+          setError(
+            issue.status === 'error'
+              ? `photo.error.${issue.message}`
+              : 'photo.error.generic'
+          );
+          continue;
         }
+
+        // 2) Client PUTs the blob straight to Supabase, bypassing Vercel.
+        const putRes = await fetch(issue.signedUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': contentType,
+            'x-upsert': 'false',
+          },
+          body: blob,
+        });
+        if (!putRes.ok) {
+          console.warn(
+            '[feed-photos] supabase PUT failed:',
+            putRes.status,
+            await putRes.text().catch(() => '')
+          );
+          setError('photo.error.upload_failed');
+          continue;
+        }
+
+        accepted.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          url: issue.publicUrl,
+        });
       } catch (err) {
         console.warn('[feed-photos] all strategies failed:', err);
         setError(

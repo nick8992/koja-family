@@ -3,7 +3,6 @@
 import { revalidatePath } from 'next/cache';
 import { randomBytes } from 'crypto';
 import { sql } from 'drizzle-orm';
-import sharp from 'sharp';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import { canEditPerson, type SessionUser } from './permissions';
@@ -132,20 +131,25 @@ export async function uploadProfilePhotoAction(
 // Separate bucket folder for feed photos (keeps profile photos clean).
 const FEED_PHOTOS_PREFIX = 'feed';
 
-export type FeedPhotoUploadState =
+export type FeedSignedUploadState =
   | { status: 'idle' }
-  | { status: 'ok'; url: string }
+  | {
+      status: 'ok';
+      signedUrl: string;
+      publicUrl: string;
+      contentType: string;
+    }
   | { status: 'error'; message: string };
 
 /**
- * Used by the feed composer / comment form. Uploads a single image file
- * and returns its public URL. Client typically calls this once per file,
- * collecting URLs before submitting the final post/comment.
+ * Issues a Supabase signed upload URL for the feed bucket. The client
+ * PUTs the file bytes directly to Supabase, bypassing Vercel's 4.5 MB
+ * function payload cap. We only authorize and return the URL.
  */
-export async function uploadFeedPhotoAction(
-  _prev: FeedPhotoUploadState,
+export async function createFeedPhotoUploadUrlAction(
+  _prev: FeedSignedUploadState,
   formData: FormData
-): Promise<FeedPhotoUploadState> {
+): Promise<FeedSignedUploadState> {
   try {
     let user: SessionUser;
     try {
@@ -157,49 +161,17 @@ export async function uploadFeedPhotoAction(
       return { status: 'error', message: 'forbidden' };
     }
 
-    const file = formData.get('file');
-    if (!(file instanceof File)) {
-      return { status: 'error', message: 'no_file' };
-    }
-    if (file.size === 0) return { status: 'error', message: 'no_file' };
-    // 50 MB source cap — matches the Next serverActions bodySizeLimit.
-    if (file.size > 50 * 1024 * 1024) return { status: 'error', message: 'too_big' };
-
-    // Server-side re-encode with sharp: rotate via EXIF, cap at 2400px,
-    // output WebP q=82. This keeps stored photos around 200-600 KB
-    // regardless of what the client sent — iPhone HEIC/JPEG, Android
-    // 108MP shots, whatever. Also strips GPS/EXIF metadata as a privacy
-    // bonus.
-    const rawBuffer = Buffer.from(await file.arrayBuffer());
-    let compressed: Buffer;
-    try {
-      compressed = await sharp(rawBuffer)
-        .rotate()
-        .resize({ width: 2400, height: 2400, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 82 })
-        .toBuffer();
-    } catch (err) {
-      console.warn(
-        '[photo] sharp re-encode failed, storing raw:',
-        err,
-        'type=',
-        file.type,
-        'size=',
-        file.size
-      );
-      // Fallback: store whatever the client sent.
-      compressed = rawBuffer;
-    }
-
-    const usedSharp = compressed !== rawBuffer;
-    const storedType = usedSharp ? 'image/webp' : file.type || 'application/octet-stream';
-    const ext = usedSharp
-      ? 'webp'
-      : file.type === 'image/png'
-      ? 'png'
-      : file.type === 'image/webp'
-      ? 'webp'
-      : 'jpg';
+    const contentTypeRaw = String(formData.get('contentType') ?? 'image/webp');
+    // Allow anything image/*; Supabase validates the actual bytes.
+    const contentType = /^image\//.test(contentTypeRaw) ? contentTypeRaw : 'image/webp';
+    const ext =
+      contentType === 'image/webp'
+        ? 'webp'
+        : contentType === 'image/png'
+        ? 'png'
+        : contentType === 'image/gif'
+        ? 'gif'
+        : 'jpg';
     const key = `${FEED_PHOTOS_PREFIX}/${Number(user.id)}/${Date.now()}-${randomBytes(6).toString(
       'hex'
     )}.${ext}`;
@@ -212,37 +184,36 @@ export async function uploadFeedPhotoAction(
       return { status: 'error', message: 'upload_failed' };
     }
 
-    const { error: uploadErr } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from(PROFILE_PHOTOS_BUCKET)
-      .upload(key, compressed, {
-        contentType: storedType,
-        cacheControl: '3600',
-        upsert: false,
-      });
-    if (uploadErr) {
-      console.error(
-        '[photo] feed upload failed:',
-        uploadErr,
-        'key=',
-        key,
-        'type=',
-        storedType,
-        'raw_size=',
-        file.size,
-        'compressed_size=',
-        compressed.length
-      );
+      .createSignedUploadUrl(key);
+    if (error || !data) {
+      console.error('[photo] createSignedUploadUrl failed:', error);
       return { status: 'error', message: 'upload_failed' };
+    }
+
+    // createSignedUploadUrl returns either an absolute signedUrl (newer
+    // SDK) or a relative path + token we have to assemble. Handle both.
+    let signedUrl = (data as { signedUrl?: string }).signedUrl ?? '';
+    if (!signedUrl) {
+      const path = (data as { path?: string }).path ?? key;
+      const token = (data as { token?: string }).token ?? '';
+      const base = process.env.SUPABASE_URL;
+      signedUrl = `${base}/storage/v1/object/upload/sign/${PROFILE_PHOTOS_BUCKET}/${path}?token=${token}`;
     }
 
     const { data: publicData } = supabase.storage
       .from(PROFILE_PHOTOS_BUCKET)
       .getPublicUrl(key);
-    return { status: 'ok', url: publicData.publicUrl };
+
+    return {
+      status: 'ok',
+      signedUrl,
+      publicUrl: publicData.publicUrl,
+      contentType,
+    };
   } catch (err) {
-    // Last-resort catch so the global error boundary never gets triggered
-    // by a photo upload. Logs still record the stack for debugging.
-    console.error('[photo] uploadFeedPhoto threw:', err);
+    console.error('[photo] createFeedPhotoUploadUrl threw:', err);
     return { status: 'error', message: 'upload_failed' };
   }
 }
