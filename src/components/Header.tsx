@@ -240,7 +240,12 @@ function AuthSide({ session }: { session: NonNullable<Session> }) {
           {session.displayName[0]?.toUpperCase()}
         </span>
       )}
-      <form action={logoutAction}>
+      <form
+        action={logoutAction}
+        onSubmit={(e) => {
+          if (!window.confirm(t('nav.logout.confirm'))) e.preventDefault();
+        }}
+      >
         <button
           type="submit"
           className="font-display text-xs text-ink-muted hover:text-terracotta-deep"

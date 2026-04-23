@@ -17,6 +17,7 @@ export const I18N: Record<Lang, Dict> = {
     'nav.admin': 'Admin',
     'nav.login': 'Sign in',
     'nav.logout': 'Sign out',
+    'nav.logout.confirm': 'Are you sure you want to sign out?',
     'nav.notifications': 'Notifications',
 
     'home.hero.title': 'The House of Koja',
@@ -338,6 +339,7 @@ export const I18N: Record<Lang, Dict> = {
     'nav.admin': 'الإدارة',
     'nav.login': 'تسجيل الدخول',
     'nav.logout': 'تسجيل الخروج',
+    'nav.logout.confirm': 'هل أنت متأكد أنك تريد تسجيل الخروج؟',
     'nav.notifications': 'التنبيهات',
 
     'home.hero.title': 'بيت كوجا',
