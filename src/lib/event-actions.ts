@@ -66,6 +66,8 @@ export async function createEventAction(
     hour: 'numeric',
     minute: '2-digit',
   });
+  // The feed renders a "View event →" button for posts linked to an event,
+  // so the body doesn't need to spell out a URL.
   const bodyLines = [
     title,
     '',
@@ -76,8 +78,6 @@ export async function createEventAction(
     bodyLines.push('');
     bodyLines.push(description);
   }
-  bodyLines.push('');
-  bodyLines.push('See the full event → /events');
   const postBody = bodyLines.join('\n');
 
   try {

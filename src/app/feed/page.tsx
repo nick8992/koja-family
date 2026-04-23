@@ -152,6 +152,8 @@ export default async function FeedPage() {
                 story: translate(lang, 'feed.kind.story'),
                 business: translate(lang, 'feed.kind.business'),
                 announcement: translate(lang, 'feed.kind.announcement'),
+                eventAnnouncement: translate(lang, 'feed.kind.event_announcement'),
+                viewEvent: translate(lang, 'feed.view_event'),
                 pendingPostNotice: translate(lang, 'feed.pending.post'),
                 pendingCommentNotice: translate(lang, 'feed.pending.comment'),
                 noComments: translate(lang, 'feed.no_comments'),
@@ -182,6 +184,8 @@ function PostCard({
     story: string;
     business: string;
     announcement: string;
+    eventAnnouncement: string;
+    viewEvent: string;
     pendingPostNotice: string;
     pendingCommentNotice: string;
     noComments: string;
@@ -192,6 +196,7 @@ function PostCard({
     viewer.userId != null &&
     (viewer.role === 'admin' || viewer.userId === post.author.userId);
 
+  const isEventPost = post.linkedEventId != null;
   const kindLabel =
     post.kind === 'general'
       ? null
@@ -200,7 +205,9 @@ function PostCard({
       : post.kind === 'business'
       ? labels.business
       : post.kind === 'announcement'
-      ? labels.announcement
+      ? isEventPost
+        ? labels.eventAnnouncement
+        : labels.announcement
       : null;
 
   return (
@@ -246,6 +253,15 @@ function PostCard({
         </p>
       ) : null}
       {post.photoUrls.length > 0 ? <PhotoGrid urls={post.photoUrls} /> : null}
+      {post.linkedEventId != null ? (
+        <Link
+          href={`/events/${post.linkedEventId}`}
+          className="font-display mt-3 inline-flex items-center gap-1.5 rounded-sm border border-olive-deep bg-olive-deep px-3 py-1.5 text-xs font-medium text-cream transition-colors hover:border-terracotta-deep hover:bg-terracotta-deep"
+        >
+          {labels.viewEvent}
+          <span aria-hidden>→</span>
+        </Link>
+      ) : null}
 
       <div className="mt-3 flex items-center justify-between gap-4 border-t border-dotted border-border pt-2">
         <LikeButton

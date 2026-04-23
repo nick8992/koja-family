@@ -20,6 +20,8 @@ export type FeedPost = {
   pendingForViewer: boolean;
   likeCount: number;
   viewerLiked: boolean;
+  /** If this post is an announcement for an event, the event id. */
+  linkedEventId: number | null;
 };
 
 export type FeedComment = {
@@ -51,6 +53,7 @@ type PostRow = {
   author_approved: boolean;
   like_count: number;
   viewer_liked: boolean;
+  linked_event_id: number | null;
 };
 
 type CommentRow = {
@@ -84,7 +87,10 @@ export async function loadFeed(
            per.profile_photo_url      AS author_photo_url,
            (u.approved_at IS NOT NULL) AS author_approved,
            (SELECT COUNT(*)::int FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
-           EXISTS (SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ${viewer}) AS viewer_liked
+           EXISTS (SELECT 1 FROM post_likes pl WHERE pl.post_id = p.id AND pl.user_id = ${viewer}) AS viewer_liked,
+           (SELECT e.id FROM events e
+             WHERE e.announcement_post_id = p.id AND e.deleted_at IS NULL
+             LIMIT 1) AS linked_event_id
       FROM posts p
       JOIN users u   ON u.id  = p.author_user_id
       JOIN persons per ON per.id = u.person_id
@@ -110,6 +116,7 @@ export async function loadFeed(
       !r.author_approved && r.author_user_id === viewerUserId,
     likeCount: Number(r.like_count ?? 0),
     viewerLiked: !!r.viewer_liked,
+    linkedEventId: r.linked_event_id,
   }));
 
   const commentsByPost = new Map<number, FeedComment[]>();
