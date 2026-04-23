@@ -71,8 +71,10 @@ export default async function HomePage() {
         <p className="font-display mx-auto mb-5 max-w-2xl text-xl italic leading-relaxed text-ink-muted">
           {await tServer('home.hero.tagline', { n: stats.total })}
         </p>
+        <p className="font-display mx-auto mb-3 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+          {await tServer('home.hero.expand')}
+        </p>
         <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
-          {await tServer('home.hero.expand')}{' '}
           <span className="italic text-ink-muted">
             {await tServer('home.hero.not_on_tree')}
           </span>{' '}
