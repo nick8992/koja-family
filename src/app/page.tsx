@@ -74,25 +74,25 @@ export default async function HomePage() {
         >
           ܩ
         </div>
-        <h1 className="font-display mb-4 text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-none tracking-tight text-ink">
+        <h1 className="font-display mb-4 text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-none tracking-tight text-ink">
           {await tServer('home.hero.title')}
         </h1>
-        <p className="font-arabic mb-6 text-3xl text-terracotta-deep" dir="rtl">
+        <p className="font-arabic mb-6 text-3xl font-bold text-terracotta-deep" dir="rtl">
           {await tServer('home.hero.arabic')}
         </p>
-        <p className="font-display mx-auto mb-5 max-w-2xl text-xl italic leading-relaxed text-ink-muted">
+        <p className="font-display mx-auto mb-5 max-w-2xl text-xl font-bold italic leading-relaxed text-ink-muted">
           {await tServer('home.hero.tagline', { n: stats.total })}
         </p>
-        <p className="font-display mx-auto mb-3 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+        <p className="font-display mx-auto mb-3 max-w-2xl text-[15px] font-bold leading-relaxed text-ink-soft">
           {await tServer('home.hero.expand')}
         </p>
-        <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+        <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] font-bold leading-relaxed text-ink-soft">
           <span className="italic text-ink-muted">
             {await tServer('home.hero.not_on_tree')}
           </span>{' '}
           <Link
             href="/request-addition"
-            className="font-medium not-italic text-terracotta-deep underline-offset-4 hover:underline"
+            className="font-bold not-italic text-terracotta-deep underline-offset-4 hover:underline"
           >
             {await tServer('home.hero.request_link')}
           </Link>
@@ -100,13 +100,13 @@ export default async function HomePage() {
         <div className="inline-flex gap-3">
           <Link
             href="/tree"
-            className="font-display rounded-sm border border-olive-deep bg-olive-deep px-7 py-3 text-[17px] font-medium tracking-wide text-cream transition-colors hover:border-terracotta-deep hover:bg-terracotta-deep"
+            className="font-display rounded-sm border border-olive-deep bg-olive-deep px-7 py-3 text-[17px] font-bold tracking-wide text-cream transition-colors hover:border-terracotta-deep hover:bg-terracotta-deep"
           >
             {await tServer('home.hero.cta1')}
           </Link>
           <Link
             href="/feed"
-            className="font-display rounded-sm border border-[var(--color-border-dark)] bg-cream/70 px-7 py-3 text-[17px] font-medium tracking-wide text-ink-soft backdrop-blur-sm transition-colors hover:bg-parchment-deep hover:text-olive-deep"
+            className="font-display rounded-sm border border-[var(--color-border-dark)] bg-cream/70 px-7 py-3 text-[17px] font-bold tracking-wide text-ink-soft backdrop-blur-sm transition-colors hover:bg-parchment-deep hover:text-olive-deep"
           >
             {await tServer('home.hero.cta2')}
           </Link>
