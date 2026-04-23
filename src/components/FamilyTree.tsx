@@ -106,29 +106,28 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
     const contentW = maxX - minX + 100;
     const contentH = maxY - minY + 60;
 
-    // 335 nodes fit-to-view yields ~0.22 scale — unreadable labels. Bias
-    // toward readable zoom. Vertical starts a bit more zoomed in so the
-    // opening view is centered tight on Hanna (the whole tree doesn't
-    // fit anyway, user pans to explore).
-    const fitAllScale = Math.min(W / contentW, H / contentH) * 0.9;
-    const minScale = mode === 'vertical' ? 1.3 : 1.0;
-    const scale = Math.max(fitAllScale, minScale);
+    // Opening view: fit the full 7-generation depth in the main axis
+    // (vertical: Y, horizontal: X). The tree spreads enormously in the
+    // cross axis (~200 leaves), so we deliberately don't try to fit that.
+    // Cap at 1.2 so large monitors don't produce oversized labels.
+    const mainAxisFit =
+      mode === 'vertical' ? (H * 0.85) / contentH : (W * 0.9) / contentW;
+    const scale = Math.min(mainAxisFit, 1.2);
 
     const rootPos = layout.positions.get(ROOT_ID);
     if (rootPos) {
-      // Horizontal mode: Hanna near the left, subtree at vertical center.
-      // Vertical mode: Hanna centered horizontally, anchored ~18% down so
-      // his name sits near the top of the canvas with room for sons below.
+      // Vertical: Hanna at the top-center of the canvas.
+      // Horizontal: Hanna at the left-middle of the canvas.
       if (mode === 'horizontal') {
         transformRef.current = {
-          tx: W * 0.12 - rootPos.x * scale,
+          tx: W * 0.05 - rootPos.x * scale,
           ty: H / 2 - rootPos.y * scale,
           scale,
         };
       } else {
         transformRef.current = {
           tx: W / 2 - rootPos.x * scale,
-          ty: H * 0.18 - rootPos.y * scale,
+          ty: H * 0.08 - rootPos.y * scale,
           scale,
         };
       }
