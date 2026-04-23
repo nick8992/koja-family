@@ -61,7 +61,7 @@ export default async function HomePage() {
           aria-hidden
           style={{
             background:
-              'radial-gradient(ellipse at center, rgba(247,241,224,0.82), rgba(247,241,224,0.92)), linear-gradient(to bottom, rgba(58,79,42,0.10), rgba(247,241,224,0.0) 40%)',
+              'radial-gradient(ellipse at center, rgba(247,241,224,0.41), rgba(247,241,224,0.46)), linear-gradient(to bottom, rgba(58,79,42,0.05), rgba(247,241,224,0.0) 40%)',
           }}
         />
         <div
