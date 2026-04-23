@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { auth } from '@/auth';
 import { loadUpcomingEvents, type FamilyEvent } from '@/lib/event-data';
@@ -151,6 +152,21 @@ function EventCard({
           <p className="mt-2.5 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
             {ev.description}
           </p>
+        ) : null}
+        {ev.posterUrl ? (
+          <Link
+            href={`/events/${ev.id}`}
+            className="relative mt-3 block aspect-[16/9] overflow-hidden border border-border bg-parchment-deep"
+          >
+            <Image
+              src={ev.posterUrl}
+              alt=""
+              fill
+              sizes="(max-width: 640px) 100vw, 520px"
+              className="object-cover"
+              quality={70}
+            />
+          </Link>
         ) : null}
         <div className="mt-3 flex items-center justify-between">
           <div className="font-display text-[11px] italic text-ink-muted">

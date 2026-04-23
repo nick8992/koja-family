@@ -9,6 +9,7 @@ export type FamilyEvent = {
   startsAt: string;
   endsAt: string | null;
   location: string | null;
+  posterUrl: string | null;
   announcementPostId: number | null;
   creator: {
     userId: number;
@@ -27,6 +28,7 @@ type Row = {
   starts_at: string;
   ends_at: string | null;
   location: string | null;
+  photo_url: string | null;
   announcement_post_id: number | null;
   creator_user_id: number;
   creator_person_id: number;
@@ -47,6 +49,7 @@ export async function getEvent(
   const viewer = viewerUserId ?? 0;
   const rows = await db.execute<Row>(sql`
     SELECT e.id, e.title, e.description, e.starts_at, e.ends_at, e.location,
+           e.photo_url,
            e.announcement_post_id,
            e.creator_user_id,
            u.person_id                AS creator_person_id,
@@ -71,6 +74,7 @@ export async function getEvent(
     startsAt: r.starts_at,
     endsAt: r.ends_at,
     location: r.location,
+    posterUrl: r.photo_url,
     announcementPostId: r.announcement_post_id,
     creator: {
       userId: r.creator_user_id,
@@ -90,6 +94,7 @@ export async function loadUpcomingEvents(
   const viewer = viewerUserId ?? 0;
   const rows = await db.execute<Row>(sql`
     SELECT e.id, e.title, e.description, e.starts_at, e.ends_at, e.location,
+           e.photo_url,
            e.announcement_post_id,
            e.creator_user_id,
            u.person_id                AS creator_person_id,
@@ -112,6 +117,7 @@ export async function loadUpcomingEvents(
     startsAt: r.starts_at,
     endsAt: r.ends_at,
     location: r.location,
+    posterUrl: r.photo_url,
     announcementPostId: r.announcement_post_id,
     creator: {
       userId: r.creator_user_id,

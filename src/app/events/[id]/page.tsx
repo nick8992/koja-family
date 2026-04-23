@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { sql } from 'drizzle-orm';
@@ -300,6 +301,19 @@ async function EventHeader({
           </div>
         ) : null}
       </div>
+      {ev.posterUrl ? (
+        <div className="relative mt-5 aspect-[16/9] overflow-hidden border border-border bg-parchment-deep sm:aspect-[3/2]">
+          <Image
+            src={ev.posterUrl}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 900px"
+            className="object-contain"
+            quality={80}
+            priority
+          />
+        </div>
+      ) : null}
       {ev.description ? (
         <p className="mt-5 whitespace-pre-wrap border-t border-dotted border-border pt-5 text-[15px] leading-relaxed text-ink-soft">
           {ev.description}

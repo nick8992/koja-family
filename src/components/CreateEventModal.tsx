@@ -7,6 +7,7 @@ import {
   createEventAction,
   type CreateEventState,
 } from '@/lib/event-actions';
+import { FeedPhotoUploader, type UploadedPhoto } from '@/components/FeedPhotoUploader';
 
 const initial: CreateEventState = { status: 'idle' };
 
@@ -15,12 +16,14 @@ export function CreateEventModal() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const [poster, setPoster] = useState<UploadedPhoto[]>([]);
   const [state, formAction, pending] = useActionState(createEventAction, initial);
 
   useEffect(() => {
     if (state.status === 'ok') {
       setOpen(false);
       formRef.current?.reset();
+      setPoster([]);
       router.refresh();
     }
   }, [state, router]);
@@ -127,6 +130,18 @@ export function CreateEventModal() {
                   className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
                 />
               </label>
+
+              <div className="font-display block text-sm italic text-ink-muted">
+                {t('events.form.poster')}
+                <div className="mt-1">
+                  <FeedPhotoUploader value={poster} onChange={setPoster} max={1} />
+                </div>
+                <input
+                  type="hidden"
+                  name="posterUrl"
+                  value={poster[0]?.url ?? ''}
+                />
+              </div>
 
               <div className="mt-2 flex gap-3">
                 <button

@@ -54,6 +54,11 @@ export async function createEventAction(
   }
   const location = String(formData.get('location') ?? '').trim() || null;
   const description = String(formData.get('description') ?? '').trim() || null;
+  const posterUrlRaw = String(formData.get('posterUrl') ?? '').trim();
+  const posterUrl =
+    posterUrlRaw && /^https?:\/\//.test(posterUrlRaw) && posterUrlRaw.length <= 2048
+      ? posterUrlRaw
+      : null;
 
   // Creating an event also posts an announcement to the feed so the family
   // sees it scrolling by, not only on the /events page. Both writes happen
@@ -83,14 +88,19 @@ export async function createEventAction(
   try {
     await db.transaction(async (tx) => {
       // Insert the announcement post first so we can link the event to it.
+      // text[] needs an explicit ARRAY[]::text[] literal — drizzle doesn't
+      // serialize a JS array as a native Postgres array.
+      const photoArrayExpr = posterUrl
+        ? sql`ARRAY[${posterUrl}]::text[]`
+        : sql`'{}'::text[]`;
       const postRows = await tx.execute<{ id: number }>(sql`
-        INSERT INTO posts (author_user_id, body, kind)
-        VALUES (${Number(user.id)}, ${postBody}, 'announcement')
+        INSERT INTO posts (author_user_id, body, kind, photo_urls)
+        VALUES (${Number(user.id)}, ${postBody}, 'announcement', ${photoArrayExpr})
         RETURNING id
       `);
       const postId = (postRows as unknown as { id: number }[])[0].id;
       await tx.execute(sql`
-        INSERT INTO events (creator_user_id, title, description, starts_at, ends_at, location, announcement_post_id)
+        INSERT INTO events (creator_user_id, title, description, starts_at, ends_at, location, photo_url, announcement_post_id)
         VALUES (
           ${Number(user.id)},
           ${title},
@@ -98,6 +108,7 @@ export async function createEventAction(
           ${startsAt.toISOString()}::timestamptz,
           ${endsAt ? endsAt.toISOString() : null}::timestamptz,
           ${location},
+          ${posterUrl},
           ${postId}
         )
       `);
