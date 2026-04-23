@@ -11,9 +11,25 @@ function initialOf(name: string): string {
   return 'X';
 }
 
+/**
+ * Pull the A-Z letters out of a name and normalize to "Titlecase".
+ * Nicholas → Nicholas, "Abu-Sami" → Abusami, accented chars dropped.
+ */
+function titleCaseFirstName(name: string): string {
+  const letters: string[] = [];
+  for (const ch of name.trim()) {
+    if (/^[A-Za-z]$/.test(ch)) letters.push(ch);
+  }
+  if (letters.length === 0) return 'X';
+  const s = letters.join('');
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 function baseSlugFor(node: TreeNode, byId: Map<number, TreeNode>): string {
-  const self = initialOf(node.name);
-  // Family surname — always "K" (Koja) at the end.
+  // First name spelled out, then the father's first-letter initial, then
+  // "K" for Koja. Keeps the URL readable (NicholasFK) without packing
+  // the father's full name in.
+  const self = titleCaseFirstName(node.name);
   if (node.fid == null) return `${self}K`;
   const father = byId.get(node.fid);
   const f = father ? initialOf(father.name) : '';
@@ -26,16 +42,20 @@ export type SlugMaps = {
 };
 
 /**
- * Build first-letter-initial slugs for every person on the tree.
+ * Build readable slugs for every person on the tree.
  *
- *   Nicholas Fadi Koja → NFK
- *   Ronald Fadi Badri Oraha → RFK  (self + father + K)
- *   Hanna (root)      → HK
+ *   Nicholas Fadi Koja → NicholasFK
+ *   Ronald Fadi Koja   → RonaldFK
+ *   Hanna (root)       → HannaK
  *
- * Collisions (same self + father initial) resolve by age: the oldest
- * (lowest DB id) keeps the bare slug, the next gets a trailing `2`,
- * then `3`, etc. The map is rebuilt from the current tree every
- * request, so newly added relatives fall into line automatically.
+ * The slug is rebuilt from the tree on every render — so if someone
+ * renames themselves the URL tracks the new name, and if a father is
+ * renamed every child's middle initial auto-updates with him.
+ *
+ * Collisions (same first name + father initial, e.g. two "NicholasF"
+ * cousins) resolve by DB id: the oldest (lowest id) keeps the bare
+ * slug, the next gets a trailing `2`, then `3`, etc. Lookup is
+ * case-insensitive — /profile/nicholasfk still lands.
  */
 export function computeProfileSlugs(nodes: readonly TreeNode[]): SlugMaps {
   const byId = new Map<number, TreeNode>();
@@ -56,7 +76,9 @@ export function computeProfileSlugs(nodes: readonly TreeNode[]): SlugMaps {
     ids.forEach((id, idx) => {
       const slug = idx === 0 ? base : `${base}${idx + 1}`;
       slugByDbId.set(id, slug);
-      dbIdBySlug.set(slug, id);
+      // Key the reverse lookup by lowercase so /profile/nicholasfk,
+      // /profile/NicholasFK, and /profile/NICHOLASFK all resolve.
+      dbIdBySlug.set(slug.toLowerCase(), id);
     });
   }
   return { slugByDbId, dbIdBySlug };
@@ -64,8 +86,8 @@ export function computeProfileSlugs(nodes: readonly TreeNode[]): SlugMaps {
 
 /**
  * Accept either a numeric DB id (old bookmarks, FKs, emails) or a
- * slug, and return the DB id the caller should load. Returns null for
- * unknown inputs.
+ * slug in any case, and return the DB id the caller should load.
+ * Returns null for unknown inputs.
  */
 export function resolveProfileParam(
   param: string,
@@ -75,7 +97,7 @@ export function resolveProfileParam(
     const n = Number(param);
     return Number.isInteger(n) && n > 0 ? n : null;
   }
-  return dbIdBySlug.get(param.toUpperCase()) ?? null;
+  return dbIdBySlug.get(param.toLowerCase()) ?? null;
 }
 
 /** Build a link to a profile, preferring its canonical slug. */
