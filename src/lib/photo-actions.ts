@@ -145,56 +145,79 @@ export async function uploadFeedPhotoAction(
   _prev: FeedPhotoUploadState,
   formData: FormData
 ): Promise<FeedPhotoUploadState> {
-  let user: SessionUser;
   try {
-    user = await requireSessionUser();
-  } catch {
-    return { status: 'error', message: 'not_signed_in' };
-  }
-  if (!user.approved && user.role !== 'admin') {
-    return { status: 'error', message: 'forbidden' };
-  }
+    let user: SessionUser;
+    try {
+      user = await requireSessionUser();
+    } catch {
+      return { status: 'error', message: 'not_signed_in' };
+    }
+    if (!user.approved && user.role !== 'admin') {
+      return { status: 'error', message: 'forbidden' };
+    }
 
-  const file = formData.get('file');
-  if (!(file instanceof File)) {
-    return { status: 'error', message: 'no_file' };
-  }
-  if (file.size === 0) return { status: 'error', message: 'no_file' };
-  // Client compresses to ~2000px/85% WebP, usually < 500KB. 10MB ceiling
-  // just to catch anything that slips through.
-  if (file.size > 10 * 1024 * 1024) return { status: 'error', message: 'too_big' };
-  if (!file.type.startsWith('image/')) {
-    return { status: 'error', message: 'bad_type' };
-  }
+    const file = formData.get('file');
+    if (!(file instanceof File)) {
+      return { status: 'error', message: 'no_file' };
+    }
+    if (file.size === 0) return { status: 'error', message: 'no_file' };
+    // Client compresses to ~2000px/85% WebP, usually < 500KB. 10MB ceiling
+    // just to catch anything that slips through.
+    if (file.size > 10 * 1024 * 1024) return { status: 'error', message: 'too_big' };
+    if (!file.type.startsWith('image/')) {
+      return { status: 'error', message: 'bad_type' };
+    }
 
-  const extFromType =
-    file.type === 'image/webp'
-      ? 'webp'
-      : file.type === 'image/png'
-      ? 'png'
-      : 'jpg';
-  const key = `${FEED_PHOTOS_PREFIX}/${Number(user.id)}/${Date.now()}-${randomBytes(6).toString(
-    'hex'
-  )}.${extFromType}`;
+    const extFromType =
+      file.type === 'image/webp'
+        ? 'webp'
+        : file.type === 'image/png'
+        ? 'png'
+        : 'jpg';
+    const key = `${FEED_PHOTOS_PREFIX}/${Number(user.id)}/${Date.now()}-${randomBytes(6).toString(
+      'hex'
+    )}.${extFromType}`;
 
-  const supabase = getSupabaseAdmin();
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const { error: uploadErr } = await supabase.storage
-    .from(PROFILE_PHOTOS_BUCKET)
-    .upload(key, buffer, {
-      contentType: file.type,
-      cacheControl: '3600',
-      upsert: false,
-    });
-  if (uploadErr) {
-    console.error('[photo] feed upload failed:', uploadErr);
+    let supabase;
+    try {
+      supabase = getSupabaseAdmin();
+    } catch (err) {
+      console.error('[photo] supabase client missing env:', err);
+      return { status: 'error', message: 'upload_failed' };
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { error: uploadErr } = await supabase.storage
+      .from(PROFILE_PHOTOS_BUCKET)
+      .upload(key, buffer, {
+        contentType: file.type,
+        cacheControl: '3600',
+        upsert: false,
+      });
+    if (uploadErr) {
+      console.error(
+        '[photo] feed upload failed:',
+        uploadErr,
+        'key=',
+        key,
+        'type=',
+        file.type,
+        'size=',
+        file.size
+      );
+      return { status: 'error', message: 'upload_failed' };
+    }
+
+    const { data: publicData } = supabase.storage
+      .from(PROFILE_PHOTOS_BUCKET)
+      .getPublicUrl(key);
+    return { status: 'ok', url: publicData.publicUrl };
+  } catch (err) {
+    // Last-resort catch so the global error boundary never gets triggered
+    // by a photo upload. Logs still record the stack for debugging.
+    console.error('[photo] uploadFeedPhoto threw:', err);
     return { status: 'error', message: 'upload_failed' };
   }
-
-  const { data: publicData } = supabase.storage
-    .from(PROFILE_PHOTOS_BUCKET)
-    .getPublicUrl(key);
-  return { status: 'ok', url: publicData.publicUrl };
 }
 
 export async function removeProfilePhotoAction(

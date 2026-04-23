@@ -50,6 +50,20 @@
       "when": 1776903775390,
       "tag": "0006_backfill_event_announcement_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776904206456,
+      "tag": "0007_strip_see_full_event_footer",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1776904391345,
+      "tag": "0008_strip_see_full_event_footer_all",
+      "breakpoints": true
     }
   ]
 }
