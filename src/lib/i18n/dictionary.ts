@@ -279,6 +279,20 @@ export const I18N: Record<Lang, Dict> = {
     'admin.col.old': 'Old',
     'admin.col.new': 'New',
     'admin.col.by': 'By',
+    'admin.deletions.title': 'Recent deletions',
+    'admin.deletions.empty': 'No deleted people.',
+    'admin.deletions.col.root': 'Person',
+    'admin.deletions.col.count': 'Descendants removed',
+    'admin.deletions.col.by': 'Deleted by',
+    'admin.deletePerson.button': 'Delete person',
+    'admin.deletePerson.confirm.leaf':
+      'Remove {name} from the tree? This can be undone from the admin page.',
+    'admin.deletePerson.confirm.withChildren':
+      'Remove {name} and {n} descendant(s) listed below them? This can be undone from the admin page.',
+    'admin.deletePerson.confirm.button': 'Delete',
+    'admin.deletePerson.cancel': 'Cancel',
+    'admin.deletePerson.error': 'Could not delete',
+    'admin.undoDeletion.button': 'Undo',
 
     'edit.title': 'Edit',
     'edit.action': 'Edit',
@@ -649,6 +663,20 @@ export const I18N: Record<Lang, Dict> = {
     'admin.col.old': 'السابق',
     'admin.col.new': 'الجديد',
     'admin.col.by': 'بواسطة',
+    'admin.deletions.title': 'حذف حديث',
+    'admin.deletions.empty': 'لا يوجد أفراد محذوفون.',
+    'admin.deletions.col.root': 'الشخص',
+    'admin.deletions.col.count': 'عدد الأحفاد المحذوفين',
+    'admin.deletions.col.by': 'حُذف بواسطة',
+    'admin.deletePerson.button': 'حذف الشخص',
+    'admin.deletePerson.confirm.leaf':
+      'هل تريد إزالة {name} من الشجرة؟ يمكن التراجع من صفحة المشرف.',
+    'admin.deletePerson.confirm.withChildren':
+      'هل تريد إزالة {name} و{n} من الأحفاد تحته؟ يمكن التراجع من صفحة المشرف.',
+    'admin.deletePerson.confirm.button': 'احذف',
+    'admin.deletePerson.cancel': 'إلغاء',
+    'admin.deletePerson.error': 'تعذّر الحذف',
+    'admin.undoDeletion.button': 'تراجع',
 
     'edit.title': 'تعديل',
     'edit.action': 'تعديل',

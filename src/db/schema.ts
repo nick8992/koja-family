@@ -51,10 +51,14 @@ export const persons = pgTable(
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    deletedByUser: integer('deleted_by_user').references((): AnyPgColumn => users.id),
+    deletionBatchId: text('deletion_batch_id'),
   },
   (t) => [
     index('idx_persons_father').on(t.fatherId),
     index('idx_persons_name').on(t.firstName, t.lastName),
+    index('idx_persons_deletion_batch').on(t.deletionBatchId),
     check('persons_gender_check', sql`${t.gender} IN ('M', 'F')`),
   ]
 );

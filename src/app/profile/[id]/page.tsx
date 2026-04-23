@@ -21,6 +21,7 @@ import { loadPersonGallery } from '@/lib/gallery-data';
 import { AddChildButton } from '@/components/AddChildButton';
 import { BiographyCard } from '@/components/BiographyCard';
 import { ClaimButton } from '@/components/ClaimButton';
+import { DeletePersonButton } from '@/components/DeletePersonButton';
 import { EditableField } from '@/components/EditableField';
 import { GalleryCard } from '@/components/GalleryCard';
 import { ProfilePhotoUpload } from '@/components/ProfilePhotoUpload';
@@ -214,6 +215,13 @@ export default async function ProfilePage({ params }: Props) {
               fatherId={null}
               label={await tServer('addperson.cta.root_sibling')}
               parentLabel={await tServer('addperson.sub.root')}
+            />
+          ) : null}
+          {sessionUser?.role === 'admin' && person.fatherId != null ? (
+            <DeletePersonButton
+              personId={person.id}
+              personName={person.firstName}
+              directChildrenCount={children.length}
             />
           ) : null}
         </div>

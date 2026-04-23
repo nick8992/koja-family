@@ -6,6 +6,8 @@ import { auth } from '@/auth';
 import { db } from '@/db';
 import { tServer } from '@/lib/i18n/server';
 import { approveClaimAction, rejectClaimAction } from '@/lib/admin-actions';
+import { loadRecentDeletions } from '@/lib/person-deletion-actions';
+import { UndoDeletionButton } from '@/components/UndoDeletionButton';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Admin' };
@@ -68,7 +70,11 @@ export default async function AdminPage() {
     redirect('/');
   }
 
-  const [pending, recent] = await Promise.all([loadPendingClaims(), loadRecentEdits()]);
+  const [pending, recent, deletions] = await Promise.all([
+    loadPendingClaims(),
+    loadRecentEdits(),
+    loadRecentDeletions(),
+  ]);
 
   const i = {
     title: await tServer('admin.title'),
@@ -79,6 +85,11 @@ export default async function AdminPage() {
     reject: await tServer('admin.reject'),
     recentTitle: await tServer('admin.recent.title'),
     recentEmpty: await tServer('admin.recent.empty'),
+    deletionsTitle: await tServer('admin.deletions.title'),
+    deletionsEmpty: await tServer('admin.deletions.empty'),
+    deletionsRoot: await tServer('admin.deletions.col.root'),
+    deletionsCount: await tServer('admin.deletions.col.count'),
+    deletionsBy: await tServer('admin.deletions.col.by'),
     colPerson: await tServer('admin.col.person'),
     colClaimant: await tServer('admin.col.claimant'),
     colEmail: await tServer('admin.col.email'),
@@ -164,6 +175,53 @@ export default async function AdminPage() {
                           </button>
                         </form>
                       </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      {/* RECENT DELETIONS */}
+      <section className="mb-12">
+        <h2 className="font-display mb-4 flex items-center gap-4 text-3xl font-medium text-ink">
+          {i.deletionsTitle}
+          <span className="h-px flex-1 bg-border" />
+          <span className="font-display text-sm italic text-ink-muted">{deletions.length}</span>
+        </h2>
+        {deletions.length === 0 ? (
+          <p className="font-display italic text-ink-muted">{i.deletionsEmpty}</p>
+        ) : (
+          <div className="overflow-x-auto border border-border bg-cream">
+            <table className="w-full text-sm">
+              <thead className="border-b border-border font-display text-xs uppercase tracking-wider text-ink-muted">
+                <tr>
+                  <Th>{i.colWhen}</Th>
+                  <Th>{i.deletionsRoot}</Th>
+                  <Th>{i.deletionsCount}</Th>
+                  <Th>{i.deletionsBy}</Th>
+                  <Th className="text-end">&nbsp;</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {deletions.map((d) => (
+                  <tr key={d.batchId} className="border-t border-dotted border-border">
+                    <td className="px-3 py-3 text-xs text-ink-muted">
+                      {new Date(d.deletedAt).toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3 font-display font-medium text-ink">
+                      {d.rootName}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-ink-muted">
+                      {d.count}
+                    </td>
+                    <td className="px-3 py-3 text-xs text-ink-muted">
+                      {d.deletedByName ?? '—'}
+                    </td>
+                    <td className="px-3 py-3 text-end">
+                      <UndoDeletionButton batchId={d.batchId} />
                     </td>
                   </tr>
                 ))}
