@@ -46,13 +46,24 @@ export default async function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section
-        className="relative border-b border-border px-8 pt-20 pb-16 text-center"
-        style={{
-          background:
-            'radial-gradient(ellipse at center, rgba(58,79,42,0.08), transparent 60%), var(--color-parchment)',
-        }}
-      >
+      <section className="relative overflow-hidden border-b border-border px-8 pt-20 pb-16 text-center">
+        <Image
+          src="/hero-koja-village.jpg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          quality={75}
+          className="absolute inset-0 -z-10 object-cover"
+        />
+        <div
+          className="absolute inset-0 -z-10"
+          aria-hidden
+          style={{
+            background:
+              'radial-gradient(ellipse at center, rgba(247,241,224,0.82), rgba(247,241,224,0.92)), linear-gradient(to bottom, rgba(58,79,42,0.10), rgba(247,241,224,0.0) 40%)',
+          }}
+        />
         <div
           className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-gold text-4xl text-gold-light"
           style={{
@@ -95,7 +106,7 @@ export default async function HomePage() {
           </Link>
           <Link
             href="/feed"
-            className="font-display rounded-sm border border-[var(--color-border-dark)] px-7 py-3 text-[17px] font-medium tracking-wide text-ink-soft transition-colors hover:bg-parchment-deep hover:text-olive-deep"
+            className="font-display rounded-sm border border-[var(--color-border-dark)] bg-cream/70 px-7 py-3 text-[17px] font-medium tracking-wide text-ink-soft backdrop-blur-sm transition-colors hover:bg-parchment-deep hover:text-olive-deep"
           >
             {await tServer('home.hero.cta2')}
           </Link>
