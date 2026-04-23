@@ -61,57 +61,59 @@ export default async function HomePage() {
           aria-hidden
           style={{
             background:
-              'radial-gradient(ellipse at center, rgba(247,241,224,0.41), rgba(247,241,224,0.46)), linear-gradient(to bottom, rgba(58,79,42,0.05), rgba(247,241,224,0.0) 40%)',
+              'radial-gradient(ellipse at center, rgba(247,241,224,0.20), rgba(247,241,224,0.23)), linear-gradient(to bottom, rgba(58,79,42,0.025), rgba(247,241,224,0.0) 40%)',
           }}
         />
-        <div
-          className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-gold text-4xl text-gold-light"
-          style={{
-            background: 'var(--color-olive-deep)',
-            boxShadow: 'inset 0 0 0 3px var(--color-olive-deep), 0 4px 20px rgba(0,0,0,0.25)',
-            fontFamily: 'Amiri, serif',
-          }}
-        >
-          ܩ
+        <div className="relative mx-auto max-w-3xl rounded-sm border border-border/70 bg-cream/55 px-6 py-10 shadow-[0_8px_40px_rgba(31,26,18,0.25)] backdrop-blur-md sm:px-10">
+          <div
+            className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-gold text-4xl text-gold-light"
+            style={{
+              background: 'var(--color-olive-deep)',
+              boxShadow: 'inset 0 0 0 3px var(--color-olive-deep), 0 4px 20px rgba(0,0,0,0.25)',
+              fontFamily: 'Amiri, serif',
+            }}
+          >
+            ܩ
+          </div>
+          <h1 className="font-display mb-4 text-[clamp(2.5rem,6vw,4.5rem)] font-medium leading-none tracking-tight text-ink">
+            {await tServer('home.hero.title')}
+          </h1>
+          <p className="font-arabic mb-6 text-3xl text-terracotta-deep" dir="rtl">
+            {await tServer('home.hero.arabic')}
+          </p>
+          <p className="font-display mx-auto mb-5 max-w-2xl text-xl italic leading-relaxed text-ink-muted">
+            {await tServer('home.hero.tagline', { n: stats.total })}
+          </p>
+          <p className="font-display mx-auto mb-3 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+            {await tServer('home.hero.expand')}
+          </p>
+          <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+            <span className="italic text-ink-muted">
+              {await tServer('home.hero.not_on_tree')}
+            </span>{' '}
+            <Link
+              href="/request-addition"
+              className="font-medium not-italic text-terracotta-deep underline-offset-4 hover:underline"
+            >
+              {await tServer('home.hero.request_link')}
+            </Link>
+          </p>
+          <div className="inline-flex gap-3">
+            <Link
+              href="/tree"
+              className="font-display rounded-sm border border-olive-deep bg-olive-deep px-7 py-3 text-[17px] font-medium tracking-wide text-cream transition-colors hover:border-terracotta-deep hover:bg-terracotta-deep"
+            >
+              {await tServer('home.hero.cta1')}
+            </Link>
+            <Link
+              href="/feed"
+              className="font-display rounded-sm border border-[var(--color-border-dark)] px-7 py-3 text-[17px] font-medium tracking-wide text-ink-soft transition-colors hover:bg-parchment-deep hover:text-olive-deep"
+            >
+              {await tServer('home.hero.cta2')}
+            </Link>
+          </div>
         </div>
-        <h1 className="font-display mb-4 text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-none tracking-tight text-ink">
-          {await tServer('home.hero.title')}
-        </h1>
-        <p className="font-arabic mb-6 text-3xl font-bold text-terracotta-deep" dir="rtl">
-          {await tServer('home.hero.arabic')}
-        </p>
-        <p className="font-display mx-auto mb-5 max-w-2xl text-xl font-bold italic leading-relaxed text-ink-muted">
-          {await tServer('home.hero.tagline', { n: stats.total })}
-        </p>
-        <p className="font-display mx-auto mb-3 max-w-2xl text-[15px] font-bold leading-relaxed text-ink-soft">
-          {await tServer('home.hero.expand')}
-        </p>
-        <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] font-bold leading-relaxed text-ink-soft">
-          <span className="italic text-ink-muted">
-            {await tServer('home.hero.not_on_tree')}
-          </span>{' '}
-          <Link
-            href="/request-addition"
-            className="font-bold not-italic text-terracotta-deep underline-offset-4 hover:underline"
-          >
-            {await tServer('home.hero.request_link')}
-          </Link>
-        </p>
-        <div className="inline-flex gap-3">
-          <Link
-            href="/tree"
-            className="font-display rounded-sm border border-olive-deep bg-olive-deep px-7 py-3 text-[17px] font-bold tracking-wide text-cream transition-colors hover:border-terracotta-deep hover:bg-terracotta-deep"
-          >
-            {await tServer('home.hero.cta1')}
-          </Link>
-          <Link
-            href="/feed"
-            className="font-display rounded-sm border border-[var(--color-border-dark)] bg-cream/70 px-7 py-3 text-[17px] font-bold tracking-wide text-ink-soft backdrop-blur-sm transition-colors hover:bg-parchment-deep hover:text-olive-deep"
-          >
-            {await tServer('home.hero.cta2')}
-          </Link>
-        </div>
-        <div className="mt-10 flex items-center justify-center gap-3 text-border-dark">
+        <div className="relative mt-10 flex items-center justify-center gap-3 text-border-dark">
           <span className="h-px max-w-[120px] flex-1" style={{ background: 'linear-gradient(to right, transparent, var(--color-border-dark), transparent)' }} />
           <span className="text-lg text-gold">✦</span>
           <span className="text-lg text-gold">◆</span>
