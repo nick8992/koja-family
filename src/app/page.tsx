@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { sql } from 'drizzle-orm';
 import { auth } from '@/auth';
 import { db } from '@/db';
@@ -152,9 +153,28 @@ export default async function HomePage() {
                       )}
                     </span>
                   </div>
-                  <p className="mt-3 line-clamp-3 text-[14px] leading-relaxed text-ink-soft">
-                    {post.body}
-                  </p>
+                  {post.body ? (
+                    <p className="mt-3 line-clamp-3 text-[14px] leading-relaxed text-ink-soft">
+                      {post.body}
+                    </p>
+                  ) : null}
+                  {post.photoUrls.length > 0 ? (
+                    <div className="relative mt-3 aspect-[16/9] overflow-hidden border border-border bg-parchment-deep">
+                      <Image
+                        src={post.photoUrls[0]}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 100vw, 520px"
+                        className="object-cover"
+                        quality={70}
+                      />
+                      {post.photoUrls.length > 1 ? (
+                        <span className="font-display absolute bottom-2 end-2 rounded-sm bg-ink/80 px-2 py-0.5 text-xs text-cream">
+                          +{post.photoUrls.length - 1}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </Link>
               ))}
               <Link
