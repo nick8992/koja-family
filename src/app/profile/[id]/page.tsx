@@ -17,10 +17,12 @@ import {
 import { relationship } from '@/lib/relationships';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
+import { loadPersonGallery } from '@/lib/gallery-data';
 import { AddChildButton } from '@/components/AddChildButton';
 import { BiographyCard } from '@/components/BiographyCard';
 import { ClaimButton } from '@/components/ClaimButton';
 import { EditableField } from '@/components/EditableField';
+import { GalleryCard } from '@/components/GalleryCard';
 import { ProfilePhotoUpload } from '@/components/ProfilePhotoUpload';
 
 export const dynamic = 'force-dynamic';
@@ -65,6 +67,7 @@ export default async function ProfilePage({ params }: Props) {
   const ancestorsSelfFirst = await getAncestors(id, false);
   const ancestorsRootFirst = [...ancestorsSelfFirst].reverse();
   const children = await getChildren(id);
+  const gallery = await loadPersonGallery(id);
 
   // Edit permissions
   const canEditHere = viewerUserId
@@ -319,6 +322,14 @@ export default async function ProfilePage({ params }: Props) {
           isOwner={isOwner}
         />
       </div>
+
+      <GalleryCard
+        personId={id}
+        photos={gallery}
+        canEdit={canEditHere}
+        viewerUserId={viewerUserId}
+        viewerRole={sessionUser?.role ?? null}
+      />
     </div>
   );
 }

@@ -85,6 +85,14 @@ export const I18N: Record<Lang, Dict> = {
       'Add stories you would like to share with your family about you.',
     'profile.bio.editor_prompt':
       'Nothing written here yet \u2014 you have permission to add something on their behalf.',
+
+    'gallery.title': 'Gallery',
+    'gallery.add': 'Add photos',
+    'gallery.empty.prompt':
+      'Add photos of you and your family you would like to share.',
+    'gallery.empty.cta': 'Add photos',
+    'gallery.remove': 'Remove photo',
+    'gallery.remove.confirm': 'Remove this photo from the gallery?',
     'profile.not_set': '(not set)',
     'profile.not_related': 'Not related',
     'profile.note': 'Note',
@@ -415,6 +423,13 @@ export const I18N: Record<Lang, Dict> = {
     'profile.bio.owner_prompt': 'أضف قصصًا تودّ مشاركتها مع عائلتك عن نفسك.',
     'profile.bio.editor_prompt':
       'لم يُكتب شيء هنا بعد \u2014 لديك صلاحية الإضافة نيابةً عنه.',
+
+    'gallery.title': 'المعرض',
+    'gallery.add': 'أضف صورًا',
+    'gallery.empty.prompt': 'أضف صورًا لك ولعائلتك تودّ مشاركتها.',
+    'gallery.empty.cta': 'أضف صورًا',
+    'gallery.remove': 'إزالة الصورة',
+    'gallery.remove.confirm': 'هل تريد إزالة هذه الصورة من المعرض؟',
     'profile.not_set': '(غير محدَّد)',
     'profile.not_related': 'لا توجد قرابة',
     'profile.note': 'ملاحظة',
