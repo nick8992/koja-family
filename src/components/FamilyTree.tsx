@@ -88,14 +88,38 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
     const { minX, maxX, minY, maxY } = layout.bounds;
     const contentW = maxX - minX + 100;
     const contentH = maxY - minY + 60;
-    const fitScale = Math.min(W / contentW, H / contentH) * 0.9;
-    transformRef.current = {
-      tx: (W - contentW * fitScale) / 2 - minX * fitScale + 50 * fitScale,
-      ty: (H - contentH * fitScale) / 2 - minY * fitScale + 30 * fitScale,
-      scale: fitScale,
-    };
+
+    // 335 nodes fit-to-view yields ~0.22 scale — unreadable labels. Bias
+    // toward readable zoom; the user can pan to the rest.
+    const fitAllScale = Math.min(W / contentW, H / contentH) * 0.9;
+    const scale = Math.max(fitAllScale, 1.0);
+
+    const rootPos = layout.positions.get(ROOT_ID);
+    if (rootPos) {
+      // Horizontal mode: Hanna near the left, subtree at vertical center.
+      // Vertical mode: Hanna near the top, subtree at horizontal center.
+      if (mode === 'horizontal') {
+        transformRef.current = {
+          tx: W * 0.12 - rootPos.x * scale,
+          ty: H / 2 - rootPos.y * scale,
+          scale,
+        };
+      } else {
+        transformRef.current = {
+          tx: W / 2 - rootPos.x * scale,
+          ty: H * 0.12 - rootPos.y * scale,
+          scale,
+        };
+      }
+    } else {
+      transformRef.current = {
+        tx: (W - contentW * scale) / 2 - minX * scale + 50 * scale,
+        ty: (H - contentH * scale) / 2 - minY * scale + 30 * scale,
+        scale,
+      };
+    }
     applyTransform();
-  }, [layout, applyTransform]);
+  }, [layout, applyTransform, mode]);
 
   useEffect(() => {
     fitToView();
