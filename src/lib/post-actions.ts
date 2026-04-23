@@ -65,13 +65,24 @@ export async function createPostAction(
   const kindRaw = String(formData.get('kind') ?? 'general');
   const kind = ALLOWED_KINDS.has(kindRaw) ? kindRaw : 'general';
 
+  // Drizzle's sql template serializes JS arrays as a bare string rather
+  // than a Postgres array literal, which blows up the text[] column with
+  // "malformed array literal". Build the array with explicit params.
+  const photoArrayExpr =
+    photoUrls.length === 0
+      ? sql`NULL::text[]`
+      : sql`ARRAY[${sql.join(
+          photoUrls.map((u) => sql`${u}`),
+          sql`, `
+        )}]::text[]`;
+
   await db.execute(sql`
     INSERT INTO posts (author_user_id, body, kind, photo_urls)
     VALUES (
       ${Number(user.id)},
       ${body},
       ${kind},
-      ${photoUrls.length ? photoUrls : null}
+      ${photoArrayExpr}
     )
   `);
 
@@ -157,13 +168,21 @@ export async function createCommentAction(
     return { status: 'error', message: 'bad_post' };
   }
 
+  const photoArrayExpr =
+    photoUrls.length === 0
+      ? sql`NULL::text[]`
+      : sql`ARRAY[${sql.join(
+          photoUrls.map((u) => sql`${u}`),
+          sql`, `
+        )}]::text[]`;
+
   await db.execute(sql`
     INSERT INTO comments (post_id, author_user_id, body, photo_urls)
     VALUES (
       ${postId},
       ${Number(user.id)},
       ${body},
-      ${photoUrls.length ? photoUrls : null}
+      ${photoArrayExpr}
     )
   `);
 
