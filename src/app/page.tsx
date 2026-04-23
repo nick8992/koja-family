@@ -56,15 +56,7 @@ export default async function HomePage() {
           quality={75}
           className="absolute inset-0 -z-10 object-cover"
         />
-        <div
-          className="absolute inset-0 -z-10"
-          aria-hidden
-          style={{
-            background:
-              'radial-gradient(ellipse at center, rgba(247,241,224,0.20), rgba(247,241,224,0.23)), linear-gradient(to bottom, rgba(58,79,42,0.025), rgba(247,241,224,0.0) 40%)',
-          }}
-        />
-        <div className="relative mx-auto max-w-3xl rounded-sm border border-border/70 bg-cream/55 px-6 py-10 shadow-[0_8px_40px_rgba(31,26,18,0.25)] backdrop-blur-md sm:px-10">
+        <div className="relative mx-auto max-w-3xl rounded-sm border border-border/70 bg-cream/[0.28] px-6 py-10 shadow-[0_8px_40px_rgba(31,26,18,0.25)] backdrop-blur-md sm:px-10">
           <div
             className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full border-[3px] border-gold text-4xl text-gold-light"
             style={{
