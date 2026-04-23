@@ -81,6 +81,10 @@ export const I18N: Record<Lang, Dict> = {
     'profile.no_children': 'None recorded',
     'profile.no_bio':
       'Biography not yet written. Once this spot is claimed, the family member can tell their story here.',
+    'profile.bio.owner_prompt':
+      'Add stories you would like to share with your family about you.',
+    'profile.bio.editor_prompt':
+      'Nothing written here yet \u2014 you have permission to add something on their behalf.',
     'profile.not_set': '(not set)',
     'profile.not_related': 'Not related',
     'profile.note': 'Note',
@@ -407,6 +411,9 @@ export const I18N: Record<Lang, Dict> = {
     'profile.no_children': 'لا يوجد',
     'profile.no_bio':
       'لم تُكتب السيرة بعد. عندما يُطالِب أحد أفراد العائلة بهذا المكان، سيتمكّن من كتابة سيرته هنا.',
+    'profile.bio.owner_prompt': 'أضف قصصًا تودّ مشاركتها مع عائلتك عن نفسك.',
+    'profile.bio.editor_prompt':
+      'لم يُكتب شيء هنا بعد \u2014 لديك صلاحية الإضافة نيابةً عنه.',
     'profile.not_set': '(غير محدَّد)',
     'profile.not_related': 'لا توجد قرابة',
     'profile.note': 'ملاحظة',

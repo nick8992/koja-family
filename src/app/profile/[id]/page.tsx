@@ -18,6 +18,7 @@ import { relationship } from '@/lib/relationships';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { AddChildButton } from '@/components/AddChildButton';
+import { BiographyCard } from '@/components/BiographyCard';
 import { ClaimButton } from '@/components/ClaimButton';
 import { EditableField } from '@/components/EditableField';
 import { ProfilePhotoUpload } from '@/components/ProfilePhotoUpload';
@@ -311,26 +312,12 @@ export default async function ProfilePage({ params }: Props) {
             empty={await tServer('profile.no_children')}
           />
         </section>
-        <section className="border border-border bg-cream p-6">
-          <h3 className="font-display mb-3.5 border-b border-border pb-2 text-xl font-medium text-ink">
-            {await tServer('profile.biography')}
-          </h3>
-          {canEditHere ? (
-            <EditableField
-              personId={id}
-              field="bio"
-              label={await tServer('profile.biography')}
-              type="textarea"
-              value={person.bio || (await tServer('profile.no_bio'))}
-              rawValue={person.bio ?? ''}
-              editable
-            />
-          ) : (
-            <p className="font-display whitespace-pre-wrap py-3 text-[15px] italic leading-relaxed text-ink-soft">
-              {person.bio || (await tServer('profile.no_bio'))}
-            </p>
-          )}
-        </section>
+        <BiographyCard
+          personId={id}
+          bio={person.bio}
+          editable={canEditHere}
+          isOwner={isOwner}
+        />
       </div>
     </div>
   );
