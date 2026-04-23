@@ -52,6 +52,17 @@ export function EditableField({
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(updatePersonFieldAction, initial);
 
+  const initialRaw = rawValue ?? '';
+  const isSet = initialRaw != null && String(initialRaw).trim().length > 0;
+
+  // Controlled year <select> so iOS Safari's native wheel picker
+  // doesn't leave the form with an uncommitted value after the user
+  // taps Done. Syncs from initialRaw each time the modal opens.
+  const [yearDraft, setYearDraft] = useState(initialRaw);
+  useEffect(() => {
+    if (open && type === 'year') setYearDraft(initialRaw);
+  }, [open, initialRaw, type]);
+
   // Location uses local state to compose "state, country" into the
   // single hidden "value" field the server action expects.
   const [locState, setLocState] = useState('');
@@ -75,14 +86,24 @@ export function EditableField({
     }
   }, [state, router]);
 
-  const initialRaw = rawValue ?? (value === t('profile.not_set') ? '' : value);
-  const display = value && value.length > 0 ? value : placeholder ?? t('profile.not_set');
+  // A row with no value set at all:
+  //   - hidden entirely if the viewer can't edit it
+  //   - shown with an "Edit" action button if the viewer can edit it
+  // (Placeholder prop wins over is-set heuristic when the caller
+  //  explicitly passed a blank placeholder, e.g. the deceased row.)
+  const hasPlaceholder = placeholder !== undefined;
+  const isEmpty =
+    !isSet && (value == null || value.trim().length === 0 || value === t('profile.not_set'));
+
+  if (isEmpty && !editable && !hasPlaceholder) {
+    return null;
+  }
 
   if (!editable) {
     return (
       <div className="flex items-center justify-between border-b border-dotted border-border py-2 text-sm last:border-b-0">
         <span className="font-display italic text-ink-muted">{label}</span>
-        <span className="font-medium text-ink text-end">{display}</span>
+        <span className="font-medium text-ink text-end">{value || placeholder || '\u00A0'}</span>
       </div>
     );
   }
@@ -90,16 +111,27 @@ export function EditableField({
   return (
     <div className="flex items-center justify-between border-b border-dotted border-border py-2 text-sm last:border-b-0">
       <span className="font-display italic text-ink-muted">{label}</span>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-1.5 text-end font-medium text-ink transition-colors hover:text-terracotta-deep"
-      >
-        <span className="border-b border-dashed border-border-dark hover:border-terracotta">
-          {display || '\u00A0'}
-        </span>
-        <EditIcon />
-      </button>
+      {isEmpty ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="font-display flex items-center gap-1 rounded-sm border border-[var(--color-border-dark)] bg-parchment-deep px-2.5 py-0.5 text-xs font-medium text-terracotta-deep hover:bg-cream"
+        >
+          <EditIcon />
+          {t('edit.action')}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 text-end font-medium text-ink transition-colors hover:text-terracotta-deep"
+        >
+          <span className="border-b border-dashed border-border-dark hover:border-terracotta">
+            {value || placeholder || '\u00A0'}
+          </span>
+          <EditIcon />
+        </button>
+      )}
 
       {open ? (
         <div
@@ -161,7 +193,8 @@ export function EditableField({
                   {t('edit.year.label')}
                   <select
                     name="value"
-                    defaultValue={initialRaw}
+                    value={yearDraft}
+                    onChange={(e) => setYearDraft(e.target.value)}
                     autoFocus
                     className="font-display mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-base text-ink focus:outline-1 focus:outline-olive"
                   >

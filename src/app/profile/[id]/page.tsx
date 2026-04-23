@@ -35,14 +35,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: p.firstName };
 }
 
-function fmtField(v: string | null | undefined, lang: 'en' | 'ar'): string {
-  if (v == null || v === '') return translate(lang, 'profile.not_set');
-  return v;
+function fmtField(v: string | null | undefined): string {
+  return v ?? '';
 }
 
-function fmtBirthYear(p: PersonRecord, lang: 'en' | 'ar'): string {
-  if (p.birthYear == null) return translate(lang, 'profile.not_set');
-  return String(p.birthYear);
+function fmtBirthYear(p: PersonRecord): string {
+  return p.birthYear == null ? '' : String(p.birthYear);
 }
 
 export default async function ProfilePage({ params }: Props) {
@@ -83,7 +81,13 @@ export default async function ProfilePage({ params }: Props) {
     sessionUser?.role === 'admin' ||
     !!sessionUser?.approved;
   const privateLabel = translate(lang, 'profile.private');
-  const maskPrivate = (actual: string) => (canSeePrivate ? actual : privateLabel);
+  const maskPrivate = (actual: string) => {
+    // Don't emit the "(visible to approved...)" placeholder when the
+    // underlying field is empty — there's nothing to hide. Let the row
+    // fall through to the normal empty-state handling.
+    if (!actual || actual.length === 0) return '';
+    return canSeePrivate ? actual : privateLabel;
+  };
 
   const canAddChildHere =
     sessionUser && person.gender === 'M'
@@ -252,7 +256,7 @@ export default async function ProfilePage({ params }: Props) {
             field="current_location"
             type="location"
             label={await tServer('profile.field.location')}
-            value={maskPrivate(fmtField(person.currentLocation, lang))}
+            value={maskPrivate(fmtField(person.currentLocation))}
             rawValue={person.currentLocation ?? ''}
             editable={canEditHere}
           />
@@ -261,7 +265,7 @@ export default async function ProfilePage({ params }: Props) {
             field="birth_year"
             type="year"
             label={await tServer('profile.field.birthYear')}
-            value={maskPrivate(fmtBirthYear(person, lang))}
+            value={maskPrivate(fmtBirthYear(person))}
             rawValue={person.birthYear != null ? String(person.birthYear) : ''}
             editable={canEditHere}
           />
@@ -269,7 +273,7 @@ export default async function ProfilePage({ params }: Props) {
             personId={id}
             field="occupation"
             label={await tServer('profile.field.occupation')}
-            value={fmtField(person.occupation, lang)}
+            value={fmtField(person.occupation)}
             rawValue={person.occupation ?? ''}
             editable={canEditHere}
           />
@@ -277,7 +281,7 @@ export default async function ProfilePage({ params }: Props) {
             personId={id}
             field="phone"
             label={await tServer('profile.field.phone')}
-            value={maskPrivate(fmtField(person.phone, lang))}
+            value={maskPrivate(fmtField(person.phone))}
             rawValue={person.phone ?? ''}
             editable={canEditHere}
           />
@@ -285,7 +289,7 @@ export default async function ProfilePage({ params }: Props) {
             personId={id}
             field="email"
             label={await tServer('profile.field.email')}
-            value={maskPrivate(fmtField(person.email, lang))}
+            value={maskPrivate(fmtField(person.email))}
             rawValue={person.email ?? ''}
             editable={canEditHere}
           />

@@ -240,6 +240,7 @@ export const I18N: Record<Lang, Dict> = {
     'admin.col.by': 'By',
 
     'edit.title': 'Edit',
+    'edit.action': 'Edit',
     'edit.save': 'Save',
     'edit.cancel': 'Cancel',
     'edit.error.forbidden': 'You can only edit yourself, your father, grandfather, or great-grandfather.',
@@ -564,6 +565,7 @@ export const I18N: Record<Lang, Dict> = {
     'admin.col.by': 'بواسطة',
 
     'edit.title': 'تعديل',
+    'edit.action': 'تعديل',
     'edit.save': 'حفظ',
     'edit.cancel': 'إلغاء',
     'edit.error.forbidden': 'يمكنك فقط تعديل نفسك، أو أبيك، أو جدّك، أو جدّ جدّك.',
