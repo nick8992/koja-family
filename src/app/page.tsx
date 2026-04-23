@@ -46,66 +46,61 @@ export default async function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section className="relative overflow-hidden border-b border-border px-4 pt-6 pb-8 text-center sm:px-8 sm:pt-20 sm:pb-16">
-        <Image
-          src="/hero-koja-village.jpg"
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          quality={75}
-          className="absolute inset-0 -z-10 object-cover"
-        />
-        <div className="relative mx-auto max-w-3xl rounded-sm border border-border/70 bg-cream/[0.28] px-4 py-5 shadow-[0_8px_40px_rgba(31,26,18,0.25)] backdrop-blur-md sm:px-10 sm:py-10">
-          <div
-            className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full border-[3px] border-gold text-3xl text-gold-light sm:mb-6 sm:h-24 sm:w-24 sm:text-4xl"
-            style={{
-              background: 'var(--color-olive-deep)',
-              boxShadow: 'inset 0 0 0 3px var(--color-olive-deep), 0 4px 20px rgba(0,0,0,0.25)',
-              fontFamily: 'Amiri, serif',
-            }}
-          >
-            ܩ
-          </div>
-          <h1 className="font-display mb-2 text-[clamp(2rem,6vw,4.5rem)] font-medium leading-none tracking-tight text-ink sm:mb-4">
-            {await tServer('home.hero.title')}
-          </h1>
-          <p className="font-arabic mb-3 text-2xl text-terracotta-deep sm:mb-6 sm:text-3xl" dir="rtl">
-            {await tServer('home.hero.arabic')}
-          </p>
-          <p className="font-display mx-auto mb-3 max-w-2xl text-base italic leading-snug text-white sm:mb-5 sm:text-xl sm:leading-relaxed">
-            {await tServer('home.hero.tagline', { n: stats.total })}
-          </p>
-          <p className="font-display mx-auto mb-2 max-w-2xl text-[13px] leading-snug text-white sm:mb-3 sm:text-[15px] sm:leading-relaxed">
-            {await tServer('home.hero.expand')}
-          </p>
-          <p className="font-display mx-auto mb-4 max-w-2xl text-[13px] leading-snug text-white sm:mb-8 sm:text-[15px] sm:leading-relaxed">
-            <span className="italic text-white">
-              {await tServer('home.hero.not_on_tree')}
-            </span>{' '}
-            <Link
-              href="/request-addition"
-              className="font-medium not-italic text-terracotta-deep underline-offset-4 hover:underline"
-            >
-              {await tServer('home.hero.request_link')}
-            </Link>
-          </p>
-          <div className="inline-flex gap-2 sm:gap-3">
-            <Link
-              href="/tree"
-              className="font-display rounded-sm border border-olive-deep bg-olive-deep px-4 py-2 text-sm font-medium tracking-wide text-cream transition-colors hover:border-terracotta-deep hover:bg-terracotta-deep sm:px-7 sm:py-3 sm:text-[17px]"
-            >
-              {await tServer('home.hero.cta1')}
-            </Link>
-            <Link
-              href="/feed"
-              className="font-display rounded-sm border border-[var(--color-border-dark)] bg-white px-4 py-2 text-sm font-medium tracking-wide text-ink-soft transition-colors hover:bg-parchment-deep hover:text-olive-deep sm:px-7 sm:py-3 sm:text-[17px]"
-            >
-              {await tServer('home.hero.cta2')}
-            </Link>
-          </div>
+      <section
+        className="relative border-b border-border px-4 pt-6 pb-8 text-center sm:px-8 sm:pt-20 sm:pb-16"
+        style={{
+          background:
+            'radial-gradient(ellipse at center, rgba(58,79,42,0.08), transparent 60%), var(--color-parchment)',
+        }}
+      >
+        <div
+          className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full border-[3px] border-gold text-3xl text-gold-light sm:mb-6 sm:h-24 sm:w-24 sm:text-4xl"
+          style={{
+            background: 'var(--color-olive-deep)',
+            boxShadow: 'inset 0 0 0 3px var(--color-olive-deep), 0 4px 20px rgba(0,0,0,0.25)',
+            fontFamily: 'Amiri, serif',
+          }}
+        >
+          ܩ
         </div>
-        <div className="relative mt-4 flex items-center justify-center gap-3 text-border-dark sm:mt-10">
+        <h1 className="font-display mb-2 text-[clamp(2rem,6vw,4.5rem)] font-medium leading-none tracking-tight text-ink sm:mb-4">
+          {await tServer('home.hero.title')}
+        </h1>
+        <p className="font-arabic mb-3 text-2xl text-terracotta-deep sm:mb-6 sm:text-3xl" dir="rtl">
+          {await tServer('home.hero.arabic')}
+        </p>
+        <p className="font-display mx-auto mb-3 max-w-2xl text-base italic leading-snug text-ink-muted sm:mb-5 sm:text-xl sm:leading-relaxed">
+          {await tServer('home.hero.tagline', { n: stats.total })}
+        </p>
+        <p className="font-display mx-auto mb-2 max-w-2xl text-[13px] leading-snug text-ink-soft sm:mb-3 sm:text-[15px] sm:leading-relaxed">
+          {await tServer('home.hero.expand')}
+        </p>
+        <p className="font-display mx-auto mb-4 max-w-2xl text-[13px] leading-snug text-ink-soft sm:mb-8 sm:text-[15px] sm:leading-relaxed">
+          <span className="italic text-ink-muted">
+            {await tServer('home.hero.not_on_tree')}
+          </span>{' '}
+          <Link
+            href="/request-addition"
+            className="font-medium not-italic text-terracotta-deep underline-offset-4 hover:underline"
+          >
+            {await tServer('home.hero.request_link')}
+          </Link>
+        </p>
+        <div className="inline-flex gap-2 sm:gap-3">
+          <Link
+            href="/tree"
+            className="font-display rounded-sm border border-olive-deep bg-olive-deep px-4 py-2 text-sm font-medium tracking-wide text-cream transition-colors hover:border-terracotta-deep hover:bg-terracotta-deep sm:px-7 sm:py-3 sm:text-[17px]"
+          >
+            {await tServer('home.hero.cta1')}
+          </Link>
+          <Link
+            href="/feed"
+            className="font-display rounded-sm border border-[var(--color-border-dark)] px-4 py-2 text-sm font-medium tracking-wide text-ink-soft transition-colors hover:bg-parchment-deep hover:text-olive-deep sm:px-7 sm:py-3 sm:text-[17px]"
+          >
+            {await tServer('home.hero.cta2')}
+          </Link>
+        </div>
+        <div className="mt-4 flex items-center justify-center gap-3 text-border-dark sm:mt-10">
           <span className="h-px max-w-[120px] flex-1" style={{ background: 'linear-gradient(to right, transparent, var(--color-border-dark), transparent)' }} />
           <span className="text-lg text-gold">✦</span>
           <span className="text-lg text-gold">◆</span>
