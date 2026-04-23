@@ -247,6 +247,21 @@ export const personPhotos = pgTable('person_photos', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+export const albumPhotos = pgTable(
+  'album_photos',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    uploadedByUser: integer('uploaded_by_user')
+      .notNull()
+      .references(() => users.id),
+    url: text('url').notNull(),
+    caption: text('caption'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => [index('idx_album_created').on(t.createdAt)]
+);
+
 export const passwordResets = pgTable('password_resets', {
   token: varchar('token', { length: 64 }).primaryKey(),
   userId: integer('user_id')

@@ -1,6 +1,6 @@
 {
-  "id": "b8ae4f12-3d7c-4e95-a8c2-7e2f1a0b9c01",
-  "prevId": "150fc321-e5de-48a8-ad99-5f41b14b6664",
+  "id": "a716fc14-9397-41cc-a16e-d073a493391a",
+  "prevId": "b8ae4f12-3d7c-4e95-a8c2-7e2f1a0b9c01",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -59,6 +59,86 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.album_photos": {
+      "name": "album_photos",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "uploaded_by_user": {
+          "name": "uploaded_by_user",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "caption": {
+          "name": "caption",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_album_created": {
+          "name": "idx_album_created",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "album_photos_uploaded_by_user_users_id_fk": {
+          "name": "album_photos_uploaded_by_user_users_id_fk",
+          "tableFrom": "album_photos",
+          "tableTo": "users",
+          "columnsFrom": [
+            "uploaded_by_user"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },

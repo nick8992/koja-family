@@ -13,6 +13,7 @@ export const I18N: Record<Lang, Dict> = {
     'nav.tree': 'Family Tree',
     'nav.feed': 'Feed',
     'nav.events': 'Events',
+    'nav.album': 'Album',
     'nav.calc': 'Relations',
     'nav.admin': 'Admin',
     'nav.login': 'Sign in',
@@ -94,6 +95,28 @@ export const I18N: Record<Lang, Dict> = {
     'gallery.empty.cta': 'Add photos',
     'gallery.remove': 'Remove photo',
     'gallery.remove.confirm': 'Remove this photo from the gallery?',
+
+    'album.title': 'Family Album',
+    'album.sub':
+      'Older family photos, weddings, those who have passed, and scenes from Alqosh.',
+    'album.empty': 'No photos yet. Be the first to add one.',
+    'album.added_by': 'Added by',
+    'album.added_by_unknown': 'Added by a family member',
+    'album.remove': 'Remove photo',
+    'album.form.title': 'Add a photo to the album',
+    'album.form.sub':
+      'Please include a caption with who is in the photo, where it was taken, roughly what year, and what the occasion was.',
+    'album.form.pick': 'Choose a photo',
+    'album.form.replace': 'Replace',
+    'album.form.caption': 'Caption',
+    'album.form.caption.placeholder':
+      'e.g. My grandparents Hanna and Mariam at their wedding in Alqosh, ~1948.',
+    'album.form.save': 'Add to album',
+    'album.gate.signed_out':
+      'The family album is open to those signed in to an approved account. Claim your spot on the tree to join.',
+    'album.gate.claim_cta': 'Claim your spot',
+    'album.gate.pending':
+      'Your account is awaiting admin approval. Once approved you will be able to view and contribute to the family album.',
     'profile.not_set': '(not set)',
     'profile.not_related': 'Not related',
     'profile.note': 'Note',
@@ -364,6 +387,7 @@ export const I18N: Record<Lang, Dict> = {
     'nav.tree': 'شجرة العائلة',
     'nav.feed': 'المنشورات',
     'nav.events': 'المناسبات',
+    'nav.album': 'الألبوم',
     'nav.calc': 'القرابة',
     'nav.admin': 'الإدارة',
     'nav.login': 'تسجيل الدخول',
@@ -443,6 +467,27 @@ export const I18N: Record<Lang, Dict> = {
     'gallery.empty.cta': 'أضف صورًا',
     'gallery.remove': 'إزالة الصورة',
     'gallery.remove.confirm': 'هل تريد إزالة هذه الصورة من المعرض؟',
+
+    'album.title': 'ألبوم العائلة',
+    'album.sub': 'صور قديمة للعائلة، أعراس، ذكرى من توفّوا، ومشاهد من ألقوش.',
+    'album.empty': 'لا توجد صور بعد. كن أول من يضيف واحدة.',
+    'album.added_by': 'أضافها',
+    'album.added_by_unknown': 'أضافها أحد أفراد العائلة',
+    'album.remove': 'إزالة الصورة',
+    'album.form.title': 'أضف صورة إلى الألبوم',
+    'album.form.sub':
+      'يرجى إرفاق تعليق يذكر من في الصورة، أين التُقطت، تقريباً في أي سنة، وما هي المناسبة.',
+    'album.form.pick': 'اختر صورة',
+    'album.form.replace': 'استبدال',
+    'album.form.caption': 'التعليق',
+    'album.form.caption.placeholder':
+      'مثال: جدّي حنّا وجدّتي مريم في عرسهما في ألقوش، حوالي 1948.',
+    'album.form.save': 'أضف إلى الألبوم',
+    'album.gate.signed_out':
+      'ألبوم العائلة متاح لمن لديهم حساب معتمد. احجز مكانك على الشجرة للانضمام.',
+    'album.gate.claim_cta': 'احجز مكانك',
+    'album.gate.pending':
+      'حسابك بانتظار موافقة المشرف. بعد الموافقة ستتمكّن من عرض الألبوم والمساهمة فيه.',
     'profile.not_set': '(غير محدَّد)',
     'profile.not_related': 'لا توجد قرابة',
     'profile.note': 'ملاحظة',
