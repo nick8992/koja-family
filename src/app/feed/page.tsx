@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { loadAllPersons } from '@/lib/tree-data';
 import { loadFeed, type FeedPost, type FeedComment } from '@/lib/feed-data';
 import { relationship } from '@/lib/relationships';
+import { computeProfileSlugs, profileHref } from '@/lib/profile-slugs';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { PostComposer } from '@/components/PostComposer';
@@ -93,6 +94,7 @@ export default async function FeedPage() {
 
   const byId = new Map<number, { id: number; fid: number | null; gender: 'M' | 'F' }>();
   for (const n of nodes) byId.set(n.id, { id: n.id, fid: n.fid, gender: n.gender });
+  const { slugByDbId } = computeProfileSlugs(nodes);
 
   function relLabel(authorPersonId: number): string | null {
     if (!viewer.personId) return null;
@@ -148,6 +150,7 @@ export default async function FeedPage() {
               relLabelFor={relLabel}
               lang={lang}
               isFirst={i === 0}
+              slugByDbId={slugByDbId}
               labels={{
                 general: translate(lang, 'feed.kind.general'),
                 story: translate(lang, 'feed.kind.story'),
@@ -174,6 +177,7 @@ function PostCard({
   relLabelFor,
   lang,
   isFirst,
+  slugByDbId,
   labels,
 }: {
   post: FeedPost;
@@ -181,6 +185,7 @@ function PostCard({
   viewer: Viewer;
   relLabelFor: (authorPersonId: number) => string | null;
   lang: 'en' | 'ar';
+  slugByDbId: Map<number, string>;
   isFirst: boolean;
   labels: {
     general: string;
@@ -221,7 +226,7 @@ function PostCard({
         </div>
       ) : null}
       <header className="flex items-center gap-3">
-        <Link href={`/profile/${post.author.personId}`} className="flex items-center gap-3">
+        <Link href={profileHref(post.author.personId, slugByDbId)} className="flex items-center gap-3">
           <span
             className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-gold font-display text-base font-semibold text-cream"
             style={{
@@ -301,7 +306,7 @@ function PostCard({
               return (
                 <li key={c.id} className="flex gap-2">
                   <Link
-                    href={`/profile/${c.author.personId}`}
+                    href={profileHref(c.author.personId, slugByDbId)}
                     className="shrink-0"
                   >
                     <span
@@ -323,7 +328,7 @@ function PostCard({
                     ) : null}
                     <div className="flex items-baseline gap-2">
                       <Link
-                        href={`/profile/${c.author.personId}`}
+                        href={profileHref(c.author.personId, slugByDbId)}
                         className="font-display text-sm font-semibold text-ink hover:text-terracotta-deep"
                       >
                         {c.author.firstName}

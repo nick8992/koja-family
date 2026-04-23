@@ -9,6 +9,8 @@ import {
 } from '@/lib/notifications';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
+import { loadAllPersons } from '@/lib/tree-data';
+import { computeProfileSlugs, profileHref } from '@/lib/profile-slugs';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Notifications' };
@@ -33,10 +35,12 @@ export default async function NotificationsPage() {
   if (!sessionUser?.id) redirect('/login');
 
   const userId = Number(sessionUser.id);
-  const [notifications, lang] = await Promise.all([
+  const [notifications, lang, nodes] = await Promise.all([
     loadNotifications(userId),
     getLanguage(),
+    loadAllPersons(),
   ]);
+  const { slugByDbId } = computeProfileSlugs(nodes);
   // Mark everything read the moment the viewer lands here.
   try {
     await markAllNotificationsRead(userId);
@@ -62,7 +66,7 @@ export default async function NotificationsPage() {
       ) : (
         <ul className="flex flex-col gap-2">
           {notifications.map((n) => (
-            <NotificationRow key={n.id} n={n} lang={lang} />
+            <NotificationRow key={n.id} n={n} lang={lang} slugByDbId={slugByDbId} />
           ))}
         </ul>
       )}
@@ -73,15 +77,17 @@ export default async function NotificationsPage() {
 function NotificationRow({
   n,
   lang,
+  slugByDbId,
 }: {
   n: NotificationItem;
   lang: 'en' | 'ar';
+  slugByDbId: Map<number, string>;
 }) {
   const initial = n.actorFirstName?.[0]?.toUpperCase() ?? '?';
   const body = (
     <div className="flex items-start gap-3">
       <Link
-        href={n.actorPersonId ? `/profile/${n.actorPersonId}` : '#'}
+        href={n.actorPersonId ? profileHref(n.actorPersonId, slugByDbId) : '#'}
         className="shrink-0"
       >
         <span

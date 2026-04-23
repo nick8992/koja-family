@@ -8,6 +8,7 @@ import { db } from '@/db';
 import { getEvent, type FamilyEvent } from '@/lib/event-data';
 import { loadAllPersons } from '@/lib/tree-data';
 import { relationship } from '@/lib/relationships';
+import { computeProfileSlugs, profileHref } from '@/lib/profile-slugs';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { CommentForm } from '@/components/CommentForm';
@@ -130,6 +131,7 @@ export default async function EventDetailPage({ params }: Props) {
   const nodes = await loadAllPersons();
   const byId = new Map<number, { id: number; fid: number | null; gender: 'M' | 'F' }>();
   for (const n of nodes) byId.set(n.id, { id: n.id, fid: n.fid, gender: n.gender });
+  const { slugByDbId } = computeProfileSlugs(nodes);
   function relLabel(targetPersonId: number): string | null {
     if (!viewerPersonId) return null;
     if (viewerPersonId === targetPersonId) return translate(lang, 'feed.you');
@@ -153,7 +155,7 @@ export default async function EventDetailPage({ params }: Props) {
       </Link>
 
       {/* HEADER */}
-      <EventHeader ev={ev} lang={lang} canDelete={canDeleteEvent} />
+      <EventHeader ev={ev} lang={lang} canDelete={canDeleteEvent} slugByDbId={slugByDbId} />
 
       {/* COMMENTS */}
       <section className="mt-8 border border-border bg-cream p-5">
@@ -175,7 +177,7 @@ export default async function EventDetailPage({ params }: Props) {
                   viewerUserId === ev.creator.userId);
               return (
                 <li key={c.id} className="flex gap-3 border-b border-dotted border-border pb-4 last:border-b-0 last:pb-0">
-                  <Link href={`/profile/${c.author_person_id}`} className="shrink-0">
+                  <Link href={profileHref(c.author_person_id, slugByDbId)} className="shrink-0">
                     <span
                       className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border-[1.5px] border-gold font-display text-sm font-semibold text-cream"
                       style={{
@@ -190,7 +192,7 @@ export default async function EventDetailPage({ params }: Props) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline gap-2">
                       <Link
-                        href={`/profile/${c.author_person_id}`}
+                        href={profileHref(c.author_person_id, slugByDbId)}
                         className="font-display text-sm font-semibold text-ink hover:text-terracotta-deep"
                       >
                         {c.author_first_name}
@@ -249,10 +251,12 @@ async function EventHeader({
   ev,
   lang,
   canDelete,
+  slugByDbId,
 }: {
   ev: FamilyEvent;
   lang: 'en' | 'ar';
   canDelete: boolean;
+  slugByDbId: Map<number, string>;
 }) {
   const start = new Date(ev.startsAt);
   const end = ev.endsAt ? new Date(ev.endsAt) : null;
@@ -288,7 +292,7 @@ async function EventHeader({
           <div className="font-display mt-3 text-[11px] italic text-ink-muted">
             {await tServer('events.organized_by')}{' '}
             <Link
-              href={`/profile/${ev.creator.personId}`}
+              href={profileHref(ev.creator.personId, slugByDbId)}
               className="not-italic text-terracotta-deep hover:underline"
             >
               {ev.creator.firstName}

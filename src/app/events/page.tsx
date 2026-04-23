@@ -3,6 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { auth } from '@/auth';
 import { loadUpcomingEvents, type FamilyEvent } from '@/lib/event-data';
+import { loadAllPersons } from '@/lib/tree-data';
+import { computeProfileSlugs, profileHref } from '@/lib/profile-slugs';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { CreateEventModal } from '@/components/CreateEventModal';
@@ -42,7 +44,11 @@ export default async function EventsPage() {
     !!sessionUser && (sessionUser.role === 'admin' || !!sessionUser.approved);
 
   const lang = await getLanguage();
-  const events = await loadUpcomingEvents(viewerUserId);
+  const [events, nodes] = await Promise.all([
+    loadUpcomingEvents(viewerUserId),
+    loadAllPersons(),
+  ]);
+  const { slugByDbId } = computeProfileSlugs(nodes);
 
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-8 sm:px-6 sm:py-10">
@@ -85,6 +91,7 @@ export default async function EventsPage() {
                 viewerRole={sessionUser?.role ?? null}
                 organizedByLabel={translate(lang, 'events.organized_by')}
                 pendingNotice={translate(lang, 'events.pending.notice')}
+                slugByDbId={slugByDbId}
               />
             ))}
           </div>
@@ -104,6 +111,7 @@ function EventCard({
   viewerRole,
   organizedByLabel,
   pendingNotice,
+  slugByDbId,
 }: {
   ev: FamilyEvent;
   lang: 'en' | 'ar';
@@ -111,6 +119,7 @@ function EventCard({
   viewerRole: 'member' | 'admin' | null;
   organizedByLabel: string;
   pendingNotice: string;
+  slugByDbId: Map<number, string>;
 }) {
   const d = new Date(ev.startsAt);
   const canDelete =
@@ -172,7 +181,7 @@ function EventCard({
           <div className="font-display text-[11px] italic text-ink-muted">
             {organizedByLabel}{' '}
             <Link
-              href={`/profile/${ev.creator.personId}`}
+              href={profileHref(ev.creator.personId, slugByDbId)}
               className="not-italic text-terracotta-deep hover:underline"
             >
               {ev.creator.firstName}

@@ -8,6 +8,8 @@ import { tServer } from '@/lib/i18n/server';
 import { approveClaimAction, rejectClaimAction } from '@/lib/admin-actions';
 import { loadRecentDeletions } from '@/lib/person-deletion-actions';
 import { UndoDeletionButton } from '@/components/UndoDeletionButton';
+import { loadAllPersons } from '@/lib/tree-data';
+import { computeProfileSlugs, profileHref } from '@/lib/profile-slugs';
 
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = { title: 'Admin' };
@@ -70,11 +72,13 @@ export default async function AdminPage() {
     redirect('/');
   }
 
-  const [pending, recent, deletions] = await Promise.all([
+  const [pending, recent, deletions, nodes] = await Promise.all([
     loadPendingClaims(),
     loadRecentEdits(),
     loadRecentDeletions(),
+    loadAllPersons(),
   ]);
+  const { slugByDbId } = computeProfileSlugs(nodes);
 
   const i = {
     title: await tServer('admin.title'),
@@ -133,7 +137,7 @@ export default async function AdminPage() {
                   <tr key={c.user_id} className="border-t border-dotted border-border">
                     <td className="px-3 py-3">
                       <Link
-                        href={`/profile/${c.person_id}`}
+                        href={profileHref(c.person_id, slugByDbId)}
                         className="font-display font-medium text-terracotta-deep hover:underline"
                       >
                         {c.person_name}
@@ -260,7 +264,7 @@ export default async function AdminPage() {
                     </td>
                     <td className="px-3 py-2">
                       <Link
-                        href={`/profile/${r.person_id}`}
+                        href={profileHref(r.person_id, slugByDbId)}
                         className="font-display font-medium text-terracotta-deep hover:underline"
                       >
                         {r.person_name}

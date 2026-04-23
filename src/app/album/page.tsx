@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { auth } from '@/auth';
 import { loadAlbum } from '@/lib/album-data';
 import { removeAlbumPhotoAction } from '@/lib/album-actions';
+import { loadAllPersons } from '@/lib/tree-data';
+import { computeProfileSlugs, profileHref } from '@/lib/profile-slugs';
 import { tServer } from '@/lib/i18n/server';
 import { AlbumComposer } from '@/components/AlbumComposer';
 
@@ -64,6 +66,7 @@ export default async function AlbumPage() {
   } catch (err) {
     console.error('[album] loadAlbum failed:', err);
   }
+  const { slugByDbId } = computeProfileSlugs(await loadAllPersons());
   const [titleLabel, subLabel, emptyLabel, addedByLabel, addedByUnknownLabel, removeLabel] =
     await Promise.all([
       tServer('album.title'),
@@ -125,7 +128,7 @@ export default async function AlbumPage() {
                       <>
                         {addedByLabel}{' '}
                         <Link
-                          href={`/profile/${p.uploaderPersonId}`}
+                          href={profileHref(p.uploaderPersonId, slugByDbId)}
                           className="not-italic text-terracotta-deep hover:underline"
                         >
                           {p.uploaderFirstName}

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import {
   getPerson,
@@ -17,6 +17,11 @@ import {
 import { relationship } from '@/lib/relationships';
 import { loadAllPersons } from '@/lib/tree-data';
 import { computeDisplayIds } from '@/lib/display-ids';
+import {
+  computeProfileSlugs,
+  profileHref,
+  resolveProfileParam,
+} from '@/lib/profile-slugs';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { loadPersonGallery } from '@/lib/gallery-data';
@@ -34,11 +39,17 @@ type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id: idStr } = await params;
-  const id = Number(idStr);
-  if (!Number.isInteger(id) || id < 1) return { title: 'Profile' };
-  const p = await getPerson(id);
-  if (!p) return { title: 'Profile' };
-  return { title: p.firstName };
+  // Fast path for numeric ids (old links). Slug paths resolve inside the
+  // page; metadata just falls back to the generic title — not worth
+  // loading the full tree just to title the <head>.
+  if (/^\d+$/.test(idStr)) {
+    const id = Number(idStr);
+    if (!Number.isInteger(id) || id < 1) return { title: 'Profile' };
+    const p = await getPerson(id);
+    if (!p) return { title: 'Profile' };
+    return { title: p.firstName };
+  }
+  return { title: 'Profile' };
 }
 
 function fmtField(v: string | null | undefined): string {
@@ -55,8 +66,21 @@ function fmtDeathYear(p: PersonRecord): string {
 
 export default async function ProfilePage({ params }: Props) {
   const { id: idStr } = await params;
-  const id = Number(idStr);
-  if (!Number.isInteger(id) || id < 1) notFound();
+
+  // Load the tree once. We need it anyway for display IDs + slugs.
+  const allNodes = await loadAllPersons();
+  const { slugByDbId, dbIdBySlug } = computeProfileSlugs(allNodes);
+
+  const id = resolveProfileParam(idStr, dbIdBySlug);
+  if (id == null) notFound();
+
+  // Canonicalize the URL: if the user landed here via a numeric id or a
+  // differently-cased slug, permanent-redirect to the canonical slug so
+  // shares and bookmarks all settle on the same shape.
+  const canonicalSlug = slugByDbId.get(id);
+  if (canonicalSlug && idStr !== canonicalSlug) {
+    redirect(`/profile/${canonicalSlug}`);
+  }
 
   const session = await auth();
   const sessionUser = session?.user as SessionUser | undefined;
@@ -78,7 +102,6 @@ export default async function ProfilePage({ params }: Props) {
     ? (await getChildren(person.fatherId)).filter((s) => s.id !== id)
     : [];
   const gallery = await loadPersonGallery(id);
-  const allNodes = await loadAllPersons();
   const displayIds = computeDisplayIds(allNodes);
   const displayId = displayIds.get(id) ?? id;
 
@@ -241,7 +264,7 @@ export default async function ProfilePage({ params }: Props) {
           {ancestorsRootFirst.map((p, i) => (
             <span key={p.id} className="flex items-center gap-2">
               <Link
-                href={`/profile/${p.id}`}
+                href={profileHref(p.id, slugByDbId)}
                 className={
                   'font-display shrink-0 whitespace-nowrap border px-3.5 py-2.5 text-sm transition-colors ' +
                   (p.id === id
@@ -352,6 +375,7 @@ export default async function ProfilePage({ params }: Props) {
               label={await tServer('profile.field.siblings')}
               childs={siblings}
               empty=""
+              slugByDbId={slugByDbId}
             />
           ) : null}
           {person.gender !== 'F' && children.length > 0 ? (
@@ -359,6 +383,7 @@ export default async function ProfilePage({ params }: Props) {
               label={await tServer('profile.field.children')}
               childs={children}
               empty=""
+              slugByDbId={slugByDbId}
             />
           ) : null}
         </section>
@@ -394,10 +419,12 @@ function ChildrenField({
   label,
   childs,
   empty,
+  slugByDbId,
 }: {
   label: string;
   childs: PersonRecord[];
   empty: string;
+  slugByDbId: Map<number, string>;
 }) {
   return (
     <div className="flex justify-between border-b border-dotted border-border py-2 text-sm last:border-b-0">
@@ -410,7 +437,7 @@ function ChildrenField({
             {childs.map((c, i) => (
               <span key={c.id}>
                 <Link
-                  href={`/profile/${c.id}`}
+                  href={profileHref(c.id, slugByDbId)}
                   className="cursor-pointer text-terracotta-deep hover:underline"
                 >
                   {c.firstName.replace(/ Koja$/, '')}

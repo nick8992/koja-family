@@ -14,6 +14,7 @@ import { useLanguage } from '@/lib/i18n/context';
 import { layoutTree, type LayoutMode } from '@/lib/tree-layout';
 import type { TreeNode } from '@/lib/tree-data';
 import { computeDisplayIds } from '@/lib/display-ids';
+import { computeProfileSlugs, profileHref } from '@/lib/profile-slugs';
 
 type Props = {
   nodes: TreeNode[];
@@ -69,6 +70,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
   }, [nodes]);
 
   const displayIds = useMemo(() => computeDisplayIds(nodes), [nodes]);
+  const slugByDbId = useMemo(() => computeProfileSlugs(nodes).slugByDbId, [nodes]);
 
   const layout = useMemo(() => layoutTree(nodes, ROOT_ID, mode), [nodes, mode]);
 
@@ -560,7 +562,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
                   style={{ cursor: 'pointer' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push(`/profile/${n.id}`);
+                    router.push(profileHref(n.id, slugByDbId));
                   }}
                   onMouseEnter={(e) => {
                     const rect = containerRef.current?.getBoundingClientRect();
