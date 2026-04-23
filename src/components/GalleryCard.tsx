@@ -67,7 +67,7 @@ export function GalleryCard({
   const [error, setError] = useState<string | null>(null);
 
   const hasPhotos = photos.length > 0;
-  if (!hasPhotos) return null;
+  if (!hasPhotos && !canEdit) return null;
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -155,7 +155,7 @@ export function GalleryCard({
         <h3 className="font-display text-xl font-medium text-ink">
           {t('gallery.title')}
         </h3>
-        {canEdit && hasPhotos ? (
+        {canEdit ? (
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
