@@ -26,14 +26,18 @@ function titleCaseFirstName(name: string): string {
 }
 
 function baseSlugFor(node: TreeNode, byId: Map<number, TreeNode>): string {
-  // First name spelled out, then the father's first-letter initial, then
-  // "K" for Koja. Keeps the URL readable (NicholasFK) without packing
-  // the father's full name in.
+  // First name spelled out, then the father's initial, then the
+  // grandfather's initial — e.g. Nicholas Fadi Badri → NicholasFB.
+  // Root and the root's direct children fall back gracefully since
+  // they lack one or both of those ancestors.
   const self = titleCaseFirstName(node.name);
-  if (node.fid == null) return `${self}K`;
+  if (node.fid == null) return self;
   const father = byId.get(node.fid);
   const f = father ? initialOf(father.name) : '';
-  return `${self}${f}K`;
+  if (!father || father.fid == null) return `${self}${f}`;
+  const grandfather = byId.get(father.fid);
+  const g = grandfather ? initialOf(grandfather.name) : '';
+  return `${self}${f}${g}`;
 }
 
 export type SlugMaps = {
@@ -44,18 +48,20 @@ export type SlugMaps = {
 /**
  * Build readable slugs for every person on the tree.
  *
- *   Nicholas Fadi Koja → NicholasFK
- *   Ronald Fadi Koja   → RonaldFK
- *   Hanna (root)       → HannaK
+ *   Hanna (root)                     → Hanna
+ *   Sepa (son of Hanna)              → SepaH
+ *   Nicholas Fadi Badri Oraha        → NicholasFB
  *
- * The slug is rebuilt from the tree on every render — so if someone
- * renames themselves the URL tracks the new name, and if a father is
- * renamed every child's middle initial auto-updates with him.
+ * Format is first-name + father's-initial + grandfather's-initial.
+ * Root and root's direct children drop the missing initials. The slug
+ * is rebuilt from the tree every render — so if someone is renamed
+ * the URL tracks the new name, and renaming a father cascades into
+ * every child's middle initial (and the grandfather slot of every
+ * grandchild) on the next request.
  *
- * Collisions (same first name + father initial, e.g. two "NicholasF"
- * cousins) resolve by DB id: the oldest (lowest id) keeps the bare
+ * Collisions resolve by DB id: the oldest (lowest id) keeps the bare
  * slug, the next gets a trailing `2`, then `3`, etc. Lookup is
- * case-insensitive — /profile/nicholasfk still lands.
+ * case-insensitive — /profile/nicholasfb still lands.
  */
 export function computeProfileSlugs(nodes: readonly TreeNode[]): SlugMaps {
   const byId = new Map<number, TreeNode>();
