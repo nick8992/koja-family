@@ -73,14 +73,14 @@ export default async function HomePage() {
           <p className="font-arabic mb-6 text-3xl text-terracotta-deep" dir="rtl">
             {await tServer('home.hero.arabic')}
           </p>
-          <p className="font-display mx-auto mb-5 max-w-2xl text-xl italic leading-relaxed text-ink-muted">
+          <p className="font-display mx-auto mb-5 max-w-2xl text-xl italic leading-relaxed text-white">
             {await tServer('home.hero.tagline', { n: stats.total })}
           </p>
-          <p className="font-display mx-auto mb-3 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
+          <p className="font-display mx-auto mb-3 max-w-2xl text-[15px] leading-relaxed text-white">
             {await tServer('home.hero.expand')}
           </p>
-          <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] leading-relaxed text-ink-soft">
-            <span className="italic text-ink-muted">
+          <p className="font-display mx-auto mb-8 max-w-2xl text-[15px] leading-relaxed text-white">
+            <span className="italic text-white">
               {await tServer('home.hero.not_on_tree')}
             </span>{' '}
             <Link
@@ -99,7 +99,7 @@ export default async function HomePage() {
             </Link>
             <Link
               href="/feed"
-              className="font-display rounded-sm border border-[var(--color-border-dark)] px-7 py-3 text-[17px] font-medium tracking-wide text-ink-soft transition-colors hover:bg-parchment-deep hover:text-olive-deep"
+              className="font-display rounded-sm border border-[var(--color-border-dark)] bg-white px-7 py-3 text-[17px] font-medium tracking-wide text-ink-soft transition-colors hover:bg-parchment-deep hover:text-olive-deep"
             >
               {await tServer('home.hero.cta2')}
             </Link>
