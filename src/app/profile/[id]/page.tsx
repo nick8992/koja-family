@@ -289,7 +289,7 @@ export default async function ProfilePage({ params }: Props) {
             rawValue={person.email ?? ''}
             editable={canEditHere}
           />
-          {canEditHere ? (
+          {sessionUser?.role === 'admin' ? (
             <EditableField
               personId={id}
               field="is_deceased"

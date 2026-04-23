@@ -109,8 +109,11 @@ const EDITABLE_FIELDS: Record<string, FieldType> = {
   bio: 'textarea',
 };
 
-// Admin-only fields.
-const ADMIN_ONLY_FIELDS = new Set<string>(['notes']);
+// Admin-only fields. `notes` is unused in the UI but kept in the set
+// for completeness. `is_deceased` + `death_date` are admin-only per
+// owner preference — marking someone deceased is a weighty call and
+// shouldn't be in the 3-gen edit window.
+const ADMIN_ONLY_FIELDS = new Set<string>(['notes', 'is_deceased', 'death_date']);
 
 function coerceForColumn(type: FieldType, raw: string): string | boolean | number | null {
   if (raw === '' || raw == null) return type === 'bool' ? false : null;
