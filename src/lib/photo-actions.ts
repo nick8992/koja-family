@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { randomBytes } from 'crypto';
 import { sql } from 'drizzle-orm';
+import sharp from 'sharp';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import { canEditPerson, type SessionUser } from './permissions';
@@ -161,22 +162,47 @@ export async function uploadFeedPhotoAction(
       return { status: 'error', message: 'no_file' };
     }
     if (file.size === 0) return { status: 'error', message: 'no_file' };
-    // Client compresses to ~2000px/85% WebP, usually < 500KB. 10MB ceiling
-    // just to catch anything that slips through.
-    if (file.size > 10 * 1024 * 1024) return { status: 'error', message: 'too_big' };
-    if (!file.type.startsWith('image/')) {
-      return { status: 'error', message: 'bad_type' };
+    // 50 MB source cap — matches the Next serverActions bodySizeLimit.
+    if (file.size > 50 * 1024 * 1024) return { status: 'error', message: 'too_big' };
+
+    // Server-side re-encode with sharp: rotate via EXIF, cap at 2400px,
+    // output WebP q=82. This keeps stored photos around 200-600 KB
+    // regardless of what the client sent — iPhone HEIC/JPEG, Android
+    // 108MP shots, whatever. Also strips GPS/EXIF metadata as a privacy
+    // bonus.
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
+    let compressed: Buffer;
+    try {
+      compressed = await sharp(rawBuffer)
+        .rotate()
+        .resize({ width: 2400, height: 2400, fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 82 })
+        .toBuffer();
+    } catch (err) {
+      console.warn(
+        '[photo] sharp re-encode failed, storing raw:',
+        err,
+        'type=',
+        file.type,
+        'size=',
+        file.size
+      );
+      // Fallback: store whatever the client sent.
+      compressed = rawBuffer;
     }
 
-    const extFromType =
-      file.type === 'image/webp'
-        ? 'webp'
-        : file.type === 'image/png'
-        ? 'png'
-        : 'jpg';
+    const usedSharp = compressed !== rawBuffer;
+    const storedType = usedSharp ? 'image/webp' : file.type || 'application/octet-stream';
+    const ext = usedSharp
+      ? 'webp'
+      : file.type === 'image/png'
+      ? 'png'
+      : file.type === 'image/webp'
+      ? 'webp'
+      : 'jpg';
     const key = `${FEED_PHOTOS_PREFIX}/${Number(user.id)}/${Date.now()}-${randomBytes(6).toString(
       'hex'
-    )}.${extFromType}`;
+    )}.${ext}`;
 
     let supabase;
     try {
@@ -186,11 +212,10 @@ export async function uploadFeedPhotoAction(
       return { status: 'error', message: 'upload_failed' };
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
     const { error: uploadErr } = await supabase.storage
       .from(PROFILE_PHOTOS_BUCKET)
-      .upload(key, buffer, {
-        contentType: file.type,
+      .upload(key, compressed, {
+        contentType: storedType,
         cacheControl: '3600',
         upsert: false,
       });
@@ -201,9 +226,11 @@ export async function uploadFeedPhotoAction(
         'key=',
         key,
         'type=',
-        file.type,
-        'size=',
-        file.size
+        storedType,
+        'raw_size=',
+        file.size,
+        'compressed_size=',
+        compressed.length
       );
       return { status: 'error', message: 'upload_failed' };
     }

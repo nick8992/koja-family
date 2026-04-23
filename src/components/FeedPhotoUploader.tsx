@@ -19,7 +19,7 @@ type Props = {
 const MAX_DIMENSION = 4096;
 const TARGET_TYPE = 'image/webp';
 const TARGET_QUALITY = 0.85;
-const MAX_UPLOAD_BYTES = 9 * 1024 * 1024; // leave headroom under the 10 MB server cap
+const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // matches server + bodySizeLimit
 
 async function compressFeedImage(file: File): Promise<Blob> {
   const bitmap = await createImageBitmap(file);
