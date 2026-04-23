@@ -184,7 +184,7 @@ export default async function ProfilePage({ params }: Props) {
         </div>
 
         <div className="relative flex flex-col gap-2">
-          {person.claimStatus === 'approved' ? (
+          {person.claimStatus === 'approved' || person.claimStatus === 'pending' ? (
             <button
               type="button"
               disabled
@@ -192,26 +192,12 @@ export default async function ProfilePage({ params }: Props) {
             >
               {await tServer('profile.action.claimed')}
             </button>
-          ) : person.claimStatus === 'pending' ? (
-            <button
-              type="button"
-              disabled
-              className="font-display rounded-sm border border-[var(--color-border-dark)] px-4 py-1.5 text-sm opacity-60"
-            >
-              {await tServer('profile.action.claimed')}
-            </button>
-          ) : sessionUser ? (
-            <button
-              type="button"
-              disabled
-              title="Sign out to claim a different spot"
-              className="font-display rounded-sm border border-[var(--color-border-dark)] px-4 py-1.5 text-sm opacity-60"
-            >
-              {await tServer('profile.action.claim')}
-            </button>
-          ) : (
+          ) : !sessionUser ? (
+            // Only show the claim CTA to signed-out visitors. A signed-in
+            // user already has an account and shouldn't see "This is me"
+            // on random unclaimed profiles.
             <ClaimButton personId={person.id} fullName={fullName} />
-          )}
+          ) : null}
           {canAddChildHere ? (
             <AddChildButton
               fatherId={person.id}

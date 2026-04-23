@@ -6,6 +6,7 @@ import { auth } from '@/auth';
 import { db } from '@/db';
 import { getLanguage } from '@/lib/i18n/server';
 import { LanguageProvider } from '@/lib/i18n/context';
+import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -158,6 +159,7 @@ export default async function RootLayout({
             <Footer />
           </div>
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
