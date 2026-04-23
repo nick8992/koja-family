@@ -71,6 +71,9 @@ export default async function ProfilePage({ params }: Props) {
   const ancestorsSelfFirst = await getAncestors(id, false);
   const ancestorsRootFirst = [...ancestorsSelfFirst].reverse();
   const children = await getChildren(id);
+  const siblings = person.fatherId
+    ? (await getChildren(person.fatherId)).filter((s) => s.id !== id)
+    : [];
   const gallery = await loadPersonGallery(id);
 
   // Edit permissions
@@ -331,11 +334,20 @@ export default async function ProfilePage({ params }: Props) {
               editable
             />
           ) : null}
-          <ChildrenField
-            label={await tServer('profile.field.children')}
-            childs={children}
-            empty={await tServer('profile.no_children')}
-          />
+          {siblings.length > 0 ? (
+            <ChildrenField
+              label={await tServer('profile.field.siblings')}
+              childs={siblings}
+              empty=""
+            />
+          ) : null}
+          {person.gender !== 'F' && children.length > 0 ? (
+            <ChildrenField
+              label={await tServer('profile.field.children')}
+              childs={children}
+              empty=""
+            />
+          ) : null}
         </section>
         <BiographyCard
           personId={id}
