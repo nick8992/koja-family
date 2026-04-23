@@ -131,16 +131,6 @@ export function AddChildButton({ fatherId, label, parentLabel, variant = 'ghost'
                 </div>
               </fieldset>
 
-              <label className="font-display block text-sm italic text-ink-muted">
-                {t('addperson.notes')}
-                <textarea
-                  name="notes"
-                  rows={2}
-                  maxLength={400}
-                  className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
-                />
-              </label>
-
               <div className="mt-2 flex gap-3">
                 <button
                   type="button"

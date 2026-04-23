@@ -175,11 +175,6 @@ export default async function ProfilePage({ params }: Props) {
               {await tServer('profile.generation')} {generationDepth}
             </MetaBullet>
             <MetaBullet>ID #{person.id}</MetaBullet>
-            {person.notes ? (
-              <MetaBullet accent>
-                {await tServer('profile.note')}: {person.notes}
-              </MetaBullet>
-            ) : null}
           </div>
         </div>
 

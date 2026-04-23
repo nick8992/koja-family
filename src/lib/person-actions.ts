@@ -56,17 +56,14 @@ export async function addPersonAction(
   }
   const gender = genderRaw;
 
-  const notesRaw = String(formData.get('notes') ?? '').trim();
-  const notes = notesRaw.length > 0 ? notesRaw : null;
-
   const allowed = await canAddChildUnder(user, fatherId);
   if (!allowed) {
     return { status: 'error', message: 'forbidden' };
   }
 
   const rows = await db.execute<{ id: number }>(sql`
-    INSERT INTO persons (first_name, gender, father_id, notes)
-    VALUES (${firstName}, ${gender}, ${fatherId}, ${notes})
+    INSERT INTO persons (first_name, gender, father_id)
+    VALUES (${firstName}, ${gender}, ${fatherId})
     RETURNING id
   `);
   const arr = rows as unknown as { id: number }[];

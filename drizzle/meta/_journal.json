@@ -64,6 +64,13 @@
       "when": 1776904391345,
       "tag": "0008_strip_see_full_event_footer_all",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776950061883,
+      "tag": "0009_clear_person_notes",
+      "breakpoints": true
     }
   ]
 }
