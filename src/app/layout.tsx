@@ -10,7 +10,10 @@ import { Analytics } from '@vercel/analytics/next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { AccountClaimPopup, type ClaimSearchEntry } from '@/components/AccountClaimPopup';
 import { loadUnreadCount } from '@/lib/notifications';
+import { loadAllPersons } from '@/lib/tree-data';
+import { computeProfileSlugs } from '@/lib/profile-slugs';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -130,6 +133,33 @@ export default async function RootLayout({
     };
   }
 
+  // Signed-out visitors get the "Need help claiming your account?" popup
+  // 5s after landing. Pre-compute the search list server-side so the
+  // client doesn't have to fetch — 330ish rows compresses to a few KB.
+  let claimSearch: ClaimSearchEntry[] = [];
+  if (!session?.user) {
+    try {
+      const nodes = await loadAllPersons();
+      const byId = new Map<number, (typeof nodes)[number]>();
+      for (const n of nodes) byId.set(n.id, n);
+      const { slugByDbId } = computeProfileSlugs(nodes);
+      claimSearch = nodes.map((n) => {
+        // Build "Nicholas Fadi Badri Oraha Hanna" for substring search.
+        const chain: string[] = [n.name];
+        let cur = n;
+        while (cur.fid != null) {
+          const f = byId.get(cur.fid);
+          if (!f) break;
+          chain.push(f.name);
+          cur = f;
+        }
+        return { slug: slugByDbId.get(n.id) ?? String(n.id), label: chain.join(' ') };
+      });
+    } catch (err) {
+      console.warn('[layout] claim popup data load failed:', err);
+    }
+  }
+
   return (
     <html
       lang={lang}
@@ -158,6 +188,9 @@ export default async function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          {!session?.user && claimSearch.length > 0 ? (
+            <AccountClaimPopup persons={claimSearch} />
+          ) : null}
         </LanguageProvider>
         <Analytics />
       </body>
