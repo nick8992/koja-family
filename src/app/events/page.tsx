@@ -117,31 +117,38 @@ function EventCard({
     (viewerRole === 'admin' || viewerUserId === ev.creator.userId);
 
   return (
-    <article className="grid grid-cols-[80px_1fr] gap-5 border border-border bg-cream p-5">
-      <div className="flex flex-col items-center justify-center bg-olive-deep py-2.5 text-cream">
-        <div className="font-display text-[11px] uppercase tracking-[1.5px] text-gold-light">
-          {monthKey(d)}
+    <article className="grid grid-cols-[80px_1fr] gap-5 border border-border bg-cream p-5 transition-shadow hover:shadow-md">
+      <Link href={`/events/${ev.id}`} className="block">
+        <div className="flex flex-col items-center justify-center bg-olive-deep py-2.5 text-cream">
+          <div className="font-display text-[11px] uppercase tracking-[1.5px] text-gold-light">
+            {monthKey(d)}
+          </div>
+          <div className="font-display text-3xl font-medium leading-none">
+            {d.getDate()}
+          </div>
+          <div className="font-display mt-0.5 text-[10px] text-gold-light">
+            {d.getFullYear()}
+          </div>
         </div>
-        <div className="font-display text-3xl font-medium leading-none">
-          {d.getDate()}
-        </div>
-        <div className="font-display mt-0.5 text-[10px] text-gold-light">
-          {d.getFullYear()}
-        </div>
-      </div>
+      </Link>
       <div>
         {ev.pendingForViewer ? (
           <div className="mb-2 inline-block border-s-[3px] border-gold bg-parchment-deep px-3 py-1 text-[11px] italic text-ink-muted font-display">
             {pendingNotice}
           </div>
         ) : null}
-        <div className="font-display text-xl font-medium text-ink">{ev.title}</div>
+        <Link
+          href={`/events/${ev.id}`}
+          className="font-display block text-xl font-medium text-ink hover:text-terracotta-deep"
+        >
+          {ev.title}
+        </Link>
         <div className="font-display mt-1 text-xs text-ink-muted">
           {fmtEventTime(ev.startsAt, lang)}
           {ev.location ? ` · 📍 ${ev.location}` : ''}
         </div>
         {ev.description ? (
-          <p className="mt-2.5 whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
+          <p className="mt-2.5 line-clamp-3 whitespace-pre-wrap text-sm leading-relaxed text-ink-soft">
             {ev.description}
           </p>
         ) : null}

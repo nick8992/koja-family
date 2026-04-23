@@ -8,6 +8,7 @@ export type FeedPost = {
   id: number;
   body: string;
   kind: PostKind;
+  photoUrls: string[];
   createdAt: string;
   author: {
     userId: number;
@@ -25,6 +26,7 @@ export type FeedComment = {
   id: number;
   postId: number;
   body: string;
+  photoUrls: string[];
   createdAt: string;
   author: {
     userId: number;
@@ -40,6 +42,7 @@ type PostRow = {
   id: number;
   body: string;
   kind: PostKind;
+  photo_urls: string[] | null;
   created_at: string;
   author_user_id: number;
   author_person_id: number;
@@ -54,6 +57,7 @@ type CommentRow = {
   id: number;
   post_id: number;
   body: string;
+  photo_urls: string[] | null;
   created_at: string;
   author_user_id: number;
   author_person_id: number;
@@ -73,7 +77,7 @@ export async function loadFeed(
 ): Promise<{ posts: FeedPost[]; commentsByPost: Map<number, FeedComment[]> }> {
   const viewer = viewerUserId ?? 0;
   const postRows = await db.execute<PostRow>(sql`
-    SELECT p.id, p.body, p.kind, p.created_at,
+    SELECT p.id, p.body, p.kind, p.photo_urls, p.created_at,
            p.author_user_id,
            u.person_id                AS author_person_id,
            per.first_name             AS author_first_name,
@@ -93,6 +97,7 @@ export async function loadFeed(
     id: r.id,
     body: r.body,
     kind: r.kind,
+    photoUrls: r.photo_urls ?? [],
     createdAt: r.created_at,
     author: {
       userId: r.author_user_id,
@@ -119,7 +124,7 @@ export async function loadFeed(
     sql`, `
   );
   const commentRows = await db.execute<CommentRow>(sql`
-    SELECT c.id, c.post_id, c.body, c.created_at,
+    SELECT c.id, c.post_id, c.body, c.photo_urls, c.created_at,
            c.author_user_id,
            u.person_id                AS author_person_id,
            per.first_name             AS author_first_name,
@@ -139,6 +144,7 @@ export async function loadFeed(
       id: r.id,
       postId: r.post_id,
       body: r.body,
+      photoUrls: r.photo_urls ?? [],
       createdAt: r.created_at,
       author: {
         userId: r.author_user_id,

@@ -1,9 +1,13 @@
 'use client';
 
-import { useActionState, useEffect, useRef } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/i18n/context';
 import { createPostAction, type CreatePostState } from '@/lib/post-actions';
+import {
+  FeedPhotoUploader,
+  type UploadedPhoto,
+} from './FeedPhotoUploader';
 
 const initial: CreatePostState = { status: 'idle' };
 
@@ -20,11 +24,13 @@ export function PostComposer({ viewer }: Props) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [photos, setPhotos] = useState<UploadedPhoto[]>([]);
   const [state, formAction, pending] = useActionState(createPostAction, initial);
 
   useEffect(() => {
     if (state.status === 'ok') {
       formRef.current?.reset();
+      setPhotos([]);
       router.refresh();
     }
   }, [state, router]);
@@ -62,12 +68,17 @@ export function PostComposer({ viewer }: Props) {
           <textarea
             ref={textareaRef}
             name="body"
-            required
             maxLength={4000}
             rows={3}
             placeholder={t('feed.composer.placeholder')}
             className="w-full resize-y border border-[var(--color-border-dark)] bg-parchment p-3 text-sm text-ink focus:outline-1 focus:outline-olive"
           />
+          {photos.map((p) => (
+            <input key={p.id} type="hidden" name="photoUrls" value={p.url} />
+          ))}
+          <div className="mt-2">
+            <FeedPhotoUploader value={photos} onChange={setPhotos} />
+          </div>
           {errorKey ? (
             <div className="mt-2 border-s-[3px] border-terracotta bg-parchment-deep px-3 py-2 text-xs text-terracotta-deep">
               {t(errorKey)}

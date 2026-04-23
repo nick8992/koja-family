@@ -206,6 +206,7 @@ export const comments = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     body: text('body').notNull(),
+    photoUrls: text('photo_urls').array(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },
@@ -225,6 +226,8 @@ export const events = pgTable(
     endsAt: timestamp('ends_at', { withTimezone: true }),
     location: varchar('location', { length: 300 }),
     photoUrl: text('photo_url'),
+    announcementPostId: bigint('announcement_post_id', { mode: 'number' })
+      .references(() => posts.id, { onDelete: 'set null' }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
   },

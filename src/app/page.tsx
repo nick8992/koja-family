@@ -185,7 +185,7 @@ export default async function HomePage() {
                 return (
                   <Link
                     key={ev.id}
-                    href="/events"
+                    href={`/events/${ev.id}`}
                     className="flex gap-3 border border-border bg-cream p-3.5 transition-colors hover:border-terracotta"
                   >
                     <div className="flex w-14 shrink-0 flex-col items-center justify-center bg-olive-deep px-1 py-2 text-cream">

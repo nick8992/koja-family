@@ -50,15 +50,29 @@ export async function createPostAction(
   }
 
   const body = String(formData.get('body') ?? '').trim();
-  if (body.length < 1) return { status: 'error', message: 'empty' };
+  const photoUrls = formData
+    .getAll('photoUrls')
+    .map((v) => String(v))
+    .filter((s) => s.length > 0 && s.length < 2048)
+    .slice(0, 6);
+
+  // A post must have SOMETHING — text or at least one photo.
+  if (body.length < 1 && photoUrls.length === 0) {
+    return { status: 'error', message: 'empty' };
+  }
   if (body.length > 4000) return { status: 'error', message: 'too_long' };
 
   const kindRaw = String(formData.get('kind') ?? 'general');
   const kind = ALLOWED_KINDS.has(kindRaw) ? kindRaw : 'general';
 
   await db.execute(sql`
-    INSERT INTO posts (author_user_id, body, kind)
-    VALUES (${Number(user.id)}, ${body}, ${kind})
+    INSERT INTO posts (author_user_id, body, kind, photo_urls)
+    VALUES (
+      ${Number(user.id)},
+      ${body},
+      ${kind},
+      ${photoUrls.length ? photoUrls : null}
+    )
   `);
 
   // Fan out notifications only for announcements from approved users.
@@ -126,7 +140,14 @@ export async function createCommentAction(
     return { status: 'error', message: 'bad_post' };
   }
   const body = String(formData.get('body') ?? '').trim();
-  if (body.length < 1) return { status: 'error', message: 'empty' };
+  const photoUrls = formData
+    .getAll('photoUrls')
+    .map((v) => String(v))
+    .filter((s) => s.length > 0 && s.length < 2048)
+    .slice(0, 6);
+  if (body.length < 1 && photoUrls.length === 0) {
+    return { status: 'error', message: 'empty' };
+  }
   if (body.length > 2000) return { status: 'error', message: 'too_long' };
 
   const postRows = await db.execute<{ id: number }>(
@@ -137,8 +158,13 @@ export async function createCommentAction(
   }
 
   await db.execute(sql`
-    INSERT INTO comments (post_id, author_user_id, body)
-    VALUES (${postId}, ${Number(user.id)}, ${body})
+    INSERT INTO comments (post_id, author_user_id, body, photo_urls)
+    VALUES (
+      ${postId},
+      ${Number(user.id)},
+      ${body},
+      ${photoUrls.length ? photoUrls : null}
+    )
   `);
 
   // Notify the post author (if they're not the commenter).

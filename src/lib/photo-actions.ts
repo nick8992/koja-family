@@ -128,6 +128,75 @@ export async function uploadProfilePhotoAction(
   return { status: 'ok', url: publicUrl };
 }
 
+// Separate bucket folder for feed photos (keeps profile photos clean).
+const FEED_PHOTOS_PREFIX = 'feed';
+
+export type FeedPhotoUploadState =
+  | { status: 'idle' }
+  | { status: 'ok'; url: string }
+  | { status: 'error'; message: string };
+
+/**
+ * Used by the feed composer / comment form. Uploads a single image file
+ * and returns its public URL. Client typically calls this once per file,
+ * collecting URLs before submitting the final post/comment.
+ */
+export async function uploadFeedPhotoAction(
+  _prev: FeedPhotoUploadState,
+  formData: FormData
+): Promise<FeedPhotoUploadState> {
+  let user: SessionUser;
+  try {
+    user = await requireSessionUser();
+  } catch {
+    return { status: 'error', message: 'not_signed_in' };
+  }
+  if (!user.approved && user.role !== 'admin') {
+    return { status: 'error', message: 'forbidden' };
+  }
+
+  const file = formData.get('file');
+  if (!(file instanceof File)) {
+    return { status: 'error', message: 'no_file' };
+  }
+  if (file.size === 0) return { status: 'error', message: 'no_file' };
+  // Client compresses to ~2000px/85% WebP, usually < 500KB. 10MB ceiling
+  // just to catch anything that slips through.
+  if (file.size > 10 * 1024 * 1024) return { status: 'error', message: 'too_big' };
+  if (!file.type.startsWith('image/')) {
+    return { status: 'error', message: 'bad_type' };
+  }
+
+  const extFromType =
+    file.type === 'image/webp'
+      ? 'webp'
+      : file.type === 'image/png'
+      ? 'png'
+      : 'jpg';
+  const key = `${FEED_PHOTOS_PREFIX}/${Number(user.id)}/${Date.now()}-${randomBytes(6).toString(
+    'hex'
+  )}.${extFromType}`;
+
+  const supabase = getSupabaseAdmin();
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { error: uploadErr } = await supabase.storage
+    .from(PROFILE_PHOTOS_BUCKET)
+    .upload(key, buffer, {
+      contentType: file.type,
+      cacheControl: '3600',
+      upsert: false,
+    });
+  if (uploadErr) {
+    console.error('[photo] feed upload failed:', uploadErr);
+    return { status: 'error', message: 'upload_failed' };
+  }
+
+  const { data: publicData } = supabase.storage
+    .from(PROFILE_PHOTOS_BUCKET)
+    .getPublicUrl(key);
+  return { status: 'ok', url: publicData.publicUrl };
+}
+
 export async function removeProfilePhotoAction(
   _prev: PhotoUploadState,
   formData: FormData

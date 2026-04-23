@@ -9,6 +9,7 @@ import { translate } from '@/lib/i18n/dictionary';
 import { PostComposer } from '@/components/PostComposer';
 import { CommentForm } from '@/components/CommentForm';
 import { LikeButton } from '@/components/LikeButton';
+import { PhotoGrid } from '@/components/PhotoGrid';
 import {
   DeletePostButton,
   DeleteCommentButton,
@@ -239,9 +240,12 @@ function PostCard({
           {kindLabel}
         </span>
       ) : null}
-      <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-soft">
-        {post.body}
-      </p>
+      {post.body ? (
+        <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-ink-soft">
+          {post.body}
+        </p>
+      ) : null}
+      {post.photoUrls.length > 0 ? <PhotoGrid urls={post.photoUrls} /> : null}
 
       <div className="mt-3 flex items-center justify-between gap-4 border-t border-dotted border-border pt-2">
         <LikeButton
@@ -306,9 +310,12 @@ function PostCard({
                         {fmtTime(c.createdAt, lang)}
                       </span>
                     </div>
-                    <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-ink-soft">
-                      {c.body}
-                    </p>
+                    {c.body ? (
+                      <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-ink-soft">
+                        {c.body}
+                      </p>
+                    ) : null}
+                    {c.photoUrls.length > 0 ? <PhotoGrid urls={c.photoUrls} /> : null}
                     {canDeleteC ? (
                       <div className="mt-1 flex justify-end">
                         <DeleteCommentButton commentId={c.id} />

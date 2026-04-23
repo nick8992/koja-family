@@ -82,20 +82,24 @@ export async function createEventAction(
 
   try {
     await db.transaction(async (tx) => {
+      // Insert the announcement post first so we can link the event to it.
+      const postRows = await tx.execute<{ id: number }>(sql`
+        INSERT INTO posts (author_user_id, body, kind)
+        VALUES (${Number(user.id)}, ${postBody}, 'announcement')
+        RETURNING id
+      `);
+      const postId = (postRows as unknown as { id: number }[])[0].id;
       await tx.execute(sql`
-        INSERT INTO events (creator_user_id, title, description, starts_at, ends_at, location)
+        INSERT INTO events (creator_user_id, title, description, starts_at, ends_at, location, announcement_post_id)
         VALUES (
           ${Number(user.id)},
           ${title},
           ${description},
           ${startsAt.toISOString()}::timestamptz,
           ${endsAt ? endsAt.toISOString() : null}::timestamptz,
-          ${location}
+          ${location},
+          ${postId}
         )
-      `);
-      await tx.execute(sql`
-        INSERT INTO posts (author_user_id, body, kind)
-        VALUES (${Number(user.id)}, ${postBody}, 'announcement')
       `);
     });
   } catch (err) {

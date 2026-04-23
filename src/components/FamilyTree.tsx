@@ -2,7 +2,14 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useLanguage } from '@/lib/i18n/context';
 import { layoutTree, type LayoutMode } from '@/lib/tree-layout';
 import type { TreeNode } from '@/lib/tree-data';
@@ -121,8 +128,27 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
     applyTransform();
   }, [layout, applyTransform, mode]);
 
-  useEffect(() => {
-    fitToView();
+  useLayoutEffect(() => {
+    // useLayoutEffect + RAF retry: measure the container synchronously
+    // before paint, and if dimensions aren't settled yet (can happen on
+    // first paint when fonts/CSS are still settling), retry next frame
+    // instead of leaving the user to see the SSR-rendered native-scale
+    // tree for one frame.
+    let cancelled = false;
+    let tries = 0;
+    const attempt = () => {
+      if (cancelled) return;
+      const c = containerRef.current;
+      if (c && c.clientWidth > 0 && c.clientHeight > 0) {
+        fitToView();
+        return;
+      }
+      if (tries++ < 10) requestAnimationFrame(attempt);
+    };
+    attempt();
+    return () => {
+      cancelled = true;
+    };
   }, [fitToView]);
 
   // Deliberately NOT fitting on window resize. Mobile browsers fire resize

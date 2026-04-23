@@ -157,6 +157,10 @@ export const I18N: Record<Lang, Dict> = {
     'events.error.bad_ends_at': 'That end time doesn\u2019t look right.',
     'events.error.not_signed_in': 'Sign in first.',
     'events.error.generic': 'Could not save. Try again.',
+    'events.back': 'Back to events',
+    'events.comments.title': 'Comments',
+    'events.comments.empty': 'No comments yet. Be the first.',
+    'events.comments.signed_out': 'Sign in to comment.',
 
     'calc.title': 'Relationship Finder',
     'calc.sub': "Pick any two family members and see exactly how you're connected",
@@ -255,6 +259,9 @@ export const I18N: Record<Lang, Dict> = {
     'photo.error.upload_failed': 'The upload failed. Try again.',
     'photo.error.not_signed_in': 'Sign in first.',
     'photo.error.bad_person': 'Profile not found.',
+    'photo.add': 'Add photos',
+    'photo.max_reached': 'Maximum photos reached',
+    'photo.remove_thumb': 'Remove photo',
 
     'request.back': 'Back to home',
     'request.title': 'Request to be added',
@@ -468,6 +475,10 @@ export const I18N: Record<Lang, Dict> = {
     'events.error.bad_ends_at': 'وقت النهاية غير صحيح.',
     'events.error.not_signed_in': 'سجّل دخولك أولاً.',
     'events.error.generic': 'تعذّر الحفظ. حاول مجددًا.',
+    'events.back': 'العودة إلى المناسبات',
+    'events.comments.title': 'التعليقات',
+    'events.comments.empty': 'لا توجد تعليقات بعد. كن الأول.',
+    'events.comments.signed_out': 'سجّل دخولك للتعليق.',
 
     'calc.title': 'حاسبة القرابة',
     'calc.sub': 'اختر أي شخصين من العائلة لترى صلة القرابة بينهما بالضبط',
@@ -566,6 +577,9 @@ export const I18N: Record<Lang, Dict> = {
     'photo.error.upload_failed': 'فشل الرفع. حاول مجددًا.',
     'photo.error.not_signed_in': 'سجّل دخولك أولاً.',
     'photo.error.bad_person': 'الملف غير موجود.',
+    'photo.add': 'أضف صورًا',
+    'photo.max_reached': 'وصلت الحد الأقصى',
+    'photo.remove_thumb': 'إزالة الصورة',
 
     'request.back': 'العودة إلى الرئيسية',
     'request.title': 'اطلب الإضافة إلى الشجرة',
