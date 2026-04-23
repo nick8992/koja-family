@@ -13,6 +13,7 @@ import {
 import { useLanguage } from '@/lib/i18n/context';
 import { layoutTree, type LayoutMode } from '@/lib/tree-layout';
 import type { TreeNode } from '@/lib/tree-data';
+import { computeDisplayIds } from '@/lib/display-ids';
 
 type Props = {
   nodes: TreeNode[];
@@ -66,6 +67,8 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
     for (const n of nodes) m.set(n.id, n);
     return m;
   }, [nodes]);
+
+  const displayIds = useMemo(() => computeDisplayIds(nodes), [nodes]);
 
   const layout = useMemo(() => layoutTree(nodes, ROOT_ID, mode), [nodes, mode]);
 
@@ -640,7 +643,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
                     fontSize={8}
                     fill="var(--color-ink-muted)"
                   >
-                    #{n.id}
+                    #{displayIds.get(n.id) ?? n.id}
                   </text>
                 </g>
               );
@@ -701,7 +704,11 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
             className="font-display pointer-events-none absolute z-50 whitespace-nowrap border border-gold bg-ink px-3 py-2 text-sm text-cream"
             style={{ left: tooltip.x, top: tooltip.y, opacity: 1 }}
           >
-            <TooltipContent node={byId.get(tooltip.id)!} byId={byId} />
+            <TooltipContent
+              node={byId.get(tooltip.id)!}
+              byId={byId}
+              displayId={displayIds.get(tooltip.id) ?? tooltip.id}
+            />
           </div>
         ) : null}
       </div>
@@ -738,7 +745,15 @@ function LegendRow({
   );
 }
 
-function TooltipContent({ node, byId }: { node: TreeNode; byId: Map<number, TreeNode> }) {
+function TooltipContent({
+  node,
+  byId,
+  displayId,
+}: {
+  node: TreeNode;
+  byId: Map<number, TreeNode>;
+  displayId: number;
+}) {
   const childCount = useMemo(() => {
     let c = 0;
     for (const n of byId.values()) if (n.fid === node.id) c++;
@@ -747,7 +762,7 @@ function TooltipContent({ node, byId }: { node: TreeNode; byId: Map<number, Tree
   return (
     <>
       <strong className="text-[15px]">{node.name}</strong>
-      <br />#{node.id}
+      <br />#{displayId}
       {childCount > 0 ? ` · ${childCount} children` : ''}
     </>
   );

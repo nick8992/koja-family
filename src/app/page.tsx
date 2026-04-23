@@ -20,12 +20,15 @@ type Stats = {
 async function loadStats(): Promise<Stats> {
   const [row] = await db.execute<Stats>(sql`
     WITH RECURSIVE chain AS (
-      SELECT id, 0 AS depth FROM persons WHERE father_id IS NULL
+      SELECT id, 0 AS depth FROM persons WHERE father_id IS NULL AND deleted_at IS NULL
       UNION ALL
-      SELECT p.id, c.depth + 1 FROM persons p JOIN chain c ON p.father_id = c.id
+      SELECT p.id, c.depth + 1
+        FROM persons p
+        JOIN chain c ON p.father_id = c.id
+       WHERE p.deleted_at IS NULL
     )
     SELECT
-      (SELECT COUNT(*)::int FROM persons) AS total,
+      (SELECT COUNT(*)::int FROM persons WHERE deleted_at IS NULL) AS total,
       (SELECT MAX(depth) FROM chain)::int AS generations,
       (SELECT COUNT(*)::int FROM users WHERE approved_at IS NOT NULL) AS members,
       (SELECT COUNT(*)::int FROM users WHERE approved_at IS NULL AND rejected_at IS NULL) AS pending

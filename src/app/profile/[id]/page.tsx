@@ -15,6 +15,8 @@ import {
   type SessionUser,
 } from '@/lib/permissions';
 import { relationship } from '@/lib/relationships';
+import { loadAllPersons } from '@/lib/tree-data';
+import { computeDisplayIds } from '@/lib/display-ids';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { loadPersonGallery } from '@/lib/gallery-data';
@@ -76,6 +78,9 @@ export default async function ProfilePage({ params }: Props) {
     ? (await getChildren(person.fatherId)).filter((s) => s.id !== id)
     : [];
   const gallery = await loadPersonGallery(id);
+  const allNodes = await loadAllPersons();
+  const displayIds = computeDisplayIds(allNodes);
+  const displayId = displayIds.get(id) ?? id;
 
   // Edit permissions
   const canEditHere = viewerUserId
@@ -183,7 +188,7 @@ export default async function ProfilePage({ params }: Props) {
             <MetaBullet>
               {await tServer('profile.generation')} {generationDepth}
             </MetaBullet>
-            <MetaBullet>ID #{person.id}</MetaBullet>
+            <MetaBullet>ID #{displayId}</MetaBullet>
           </div>
         </div>
 
