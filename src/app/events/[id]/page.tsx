@@ -128,8 +128,8 @@ export default async function EventDetailPage({ params }: Props) {
 
   // Relationship labels for each commenter.
   const nodes = await loadAllPersons();
-  const byId = new Map<number, { id: number; fid: number | null }>();
-  for (const n of nodes) byId.set(n.id, { id: n.id, fid: n.fid });
+  const byId = new Map<number, { id: number; fid: number | null; gender: 'M' | 'F' }>();
+  for (const n of nodes) byId.set(n.id, { id: n.id, fid: n.fid, gender: n.gender });
   function relLabel(targetPersonId: number): string | null {
     if (!viewerPersonId) return null;
     if (viewerPersonId === targetPersonId) return translate(lang, 'feed.you');

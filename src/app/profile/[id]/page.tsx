@@ -105,9 +105,9 @@ export default async function ProfilePage({ params }: Props) {
   let relLabel: string | null = null;
   if (viewerPersonId && viewerPersonId !== id) {
     const viewerChain = await getAncestors(viewerPersonId, false);
-    const byId = new Map<number, { id: number; fid: number | null }>();
+    const byId = new Map<number, { id: number; fid: number | null; gender: 'M' | 'F' }>();
     for (const p of [...viewerChain, ...ancestorsSelfFirst]) {
-      byId.set(p.id, { id: p.id, fid: p.fatherId });
+      byId.set(p.id, { id: p.id, fid: p.fatherId, gender: p.gender });
     }
     const rel = relationship(byId, viewerPersonId, id, lang);
     if (rel.mrca != null) {

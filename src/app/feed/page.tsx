@@ -91,8 +91,8 @@ export default async function FeedPage() {
     loadFeed(viewer.userId),
   ]);
 
-  const byId = new Map<number, { id: number; fid: number | null }>();
-  for (const n of nodes) byId.set(n.id, { id: n.id, fid: n.fid });
+  const byId = new Map<number, { id: number; fid: number | null; gender: 'M' | 'F' }>();
+  for (const n of nodes) byId.set(n.id, { id: n.id, fid: n.fid, gender: n.gender });
 
   function relLabel(authorPersonId: number): string | null {
     if (!viewer.personId) return null;

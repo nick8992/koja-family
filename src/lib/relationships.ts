@@ -13,9 +13,15 @@ export type Relationship = {
   mrca: number | null;
 };
 
+export type Gender = 'M' | 'F';
+
 type ByIdLike = {
-  get(id: number): { id: number; fid: number | null } | undefined;
+  get(id: number): { id: number; fid: number | null; gender?: Gender } | undefined;
 };
+
+function maleOrFemale(mascKey: string, femKey: string, g: Gender | undefined, lang: Lang): string {
+  return translate(lang, g === 'F' ? femKey : mascKey);
+}
 
 function ancestorsOf(byId: ByIdLike, id: number): number[] {
   const chain: number[] = [];
@@ -66,9 +72,11 @@ export function relationship(byId: ByIdLike, aId: number, bId: number, lang: Lan
     };
   }
 
+  const aGender = byId.get(aId)?.gender;
+  const bGender = byId.get(bId)?.gender;
   return {
-    label: relLabelSymmetric(a, b, lang),
-    directional: relLabelDirectional(a, b, lang),
+    label: relLabelSymmetric(a, b, lang, aGender, bGender),
+    directional: relLabelDirectional(a, b, lang, bGender),
     a,
     b,
     mrca,
@@ -78,34 +86,40 @@ export function relationship(byId: ByIdLike, aId: number, bId: number, lang: Lan
 /**
  * Return a directional label: how is B related to A?
  * a = steps from A up to MRCA; b = steps from B up to MRCA.
+ * B's gender (when known) selects masculine / feminine nouns.
  */
-export function relLabelDirectional(a: number, b: number, lang: Lang): string {
+export function relLabelDirectional(
+  a: number,
+  b: number,
+  lang: Lang,
+  bGender?: Gender
+): string {
   if (a === 0 && b === 0) return translate(lang, 'rel.self');
   const greats = (n: number) => translate(lang, 'rel.great_prefix').repeat(Math.max(0, n));
 
   // Direct ancestor/descendant line
   if (b === 0) {
-    if (a === 1) return translate(lang, 'rel.father');
-    if (a === 2) return translate(lang, 'rel.grandfather');
-    return greats(a - 2) + translate(lang, 'rel.grandfather');
+    if (a === 1) return maleOrFemale('rel.father', 'rel.mother', bGender, lang);
+    if (a === 2) return maleOrFemale('rel.grandfather', 'rel.grandmother', bGender, lang);
+    return greats(a - 2) + maleOrFemale('rel.grandfather', 'rel.grandmother', bGender, lang);
   }
   if (a === 0) {
-    if (b === 1) return translate(lang, 'rel.son');
-    if (b === 2) return translate(lang, 'rel.grandson');
-    return greats(b - 2) + translate(lang, 'rel.grandson');
+    if (b === 1) return maleOrFemale('rel.son', 'rel.daughter', bGender, lang);
+    if (b === 2) return maleOrFemale('rel.grandson', 'rel.granddaughter', bGender, lang);
+    return greats(b - 2) + maleOrFemale('rel.grandson', 'rel.granddaughter', bGender, lang);
   }
 
   // Siblings
-  if (a === 1 && b === 1) return translate(lang, 'rel.brother');
+  if (a === 1 && b === 1) return maleOrFemale('rel.brother', 'rel.sister', bGender, lang);
 
   // Uncle / nephew
   if (b === 1) {
-    if (a === 2) return translate(lang, 'rel.uncle');
-    return greats(a - 2) + translate(lang, 'rel.uncle');
+    if (a === 2) return maleOrFemale('rel.uncle', 'rel.aunt', bGender, lang);
+    return greats(a - 2) + maleOrFemale('rel.uncle', 'rel.aunt', bGender, lang);
   }
   if (a === 1) {
-    if (b === 2) return translate(lang, 'rel.nephew');
-    return greats(b - 2) + translate(lang, 'rel.nephew');
+    if (b === 2) return maleOrFemale('rel.nephew', 'rel.niece', bGender, lang);
+    return greats(b - 2) + maleOrFemale('rel.nephew', 'rel.niece', bGender, lang);
   }
 
   // Cousins
@@ -130,33 +144,73 @@ export function relLabelDirectional(a: number, b: number, lang: Lang): string {
 
 /**
  * Symmetric form for the "X and Y are ___" calculator header.
+ * A's gender labels A's role, B's gender labels B's role (so a father &
+ * daughter render as "father & daughter", not "father & son").
  */
-export function relLabelSymmetric(a: number, b: number, lang: Lang): string {
+export function relLabelSymmetric(
+  a: number,
+  b: number,
+  lang: Lang,
+  aGender?: Gender,
+  bGender?: Gender
+): string {
   const and = lang === 'ar' ? ' و ' : ' & ';
   if (a === 0 && b === 0) return lang === 'ar' ? 'نفس الشخص' : 'the same person';
   const greats = (n: number) => translate(lang, 'rel.great_prefix').repeat(Math.max(0, n));
 
+  // a=0 → A is the ancestor, B is the descendant
   if (a === 0) {
-    if (b === 1) return translate(lang, 'rel.father') + and + translate(lang, 'rel.son');
-    if (b === 2) return translate(lang, 'rel.grandfather') + and + translate(lang, 'rel.grandson');
+    const anc = maleOrFemale('rel.father', 'rel.mother', aGender, lang);
+    const gAnc = maleOrFemale('rel.grandfather', 'rel.grandmother', aGender, lang);
+    const desc = maleOrFemale('rel.son', 'rel.daughter', bGender, lang);
+    const gDesc = maleOrFemale('rel.grandson', 'rel.granddaughter', bGender, lang);
+    if (b === 1) return anc + and + desc;
+    if (b === 2) return gAnc + and + gDesc;
     const g = greats(b - 2);
-    return g + translate(lang, 'rel.grandfather') + and + g + translate(lang, 'rel.grandson');
+    return g + gAnc + and + g + gDesc;
   }
+  // b=0 → B is the ancestor, A is the descendant
   if (b === 0) {
-    if (a === 1) return translate(lang, 'rel.father') + and + translate(lang, 'rel.son');
-    if (a === 2) return translate(lang, 'rel.grandfather') + and + translate(lang, 'rel.grandson');
+    const anc = maleOrFemale('rel.father', 'rel.mother', bGender, lang);
+    const gAnc = maleOrFemale('rel.grandfather', 'rel.grandmother', bGender, lang);
+    const desc = maleOrFemale('rel.son', 'rel.daughter', aGender, lang);
+    const gDesc = maleOrFemale('rel.grandson', 'rel.granddaughter', aGender, lang);
+    if (a === 1) return anc + and + desc;
+    if (a === 2) return gAnc + and + gDesc;
     const g = greats(a - 2);
-    return g + translate(lang, 'rel.grandfather') + and + g + translate(lang, 'rel.grandson');
+    return g + gAnc + and + g + gDesc;
   }
-  if (a === 1 && b === 1) return lang === 'ar' ? 'شقيقان' : 'brothers';
+  if (a === 1 && b === 1) {
+    // siblings — pair by the two genders
+    if (aGender === 'F' && bGender === 'F') {
+      return lang === 'ar' ? 'شقيقتان' : 'sisters';
+    }
+    if (aGender !== 'F' && bGender !== 'F') {
+      return lang === 'ar' ? 'شقيقان' : 'brothers';
+    }
+    return (
+      maleOrFemale('rel.brother', 'rel.sister', aGender, lang) +
+      and +
+      maleOrFemale('rel.brother', 'rel.sister', bGender, lang)
+    );
+  }
 
   if (a === 1 || b === 1) {
+    // The deeper branch is the nephew/niece side; the shallower is uncle/aunt.
+    const uncleSideGender = a === 1 ? aGender : bGender;
+    const nephewSideGender = a === 1 ? bGender : aGender;
     const deep = Math.max(a, b);
     const g = deep === 2 ? '' : greats(deep - 2);
-    return g + translate(lang, 'rel.uncle') + and + g + translate(lang, 'rel.nephew');
+    return (
+      g +
+      maleOrFemale('rel.uncle', 'rel.aunt', uncleSideGender, lang) +
+      and +
+      g +
+      maleOrFemale('rel.nephew', 'rel.niece', nephewSideGender, lang)
+    );
   }
 
-  const dir = relLabelDirectional(a, b, lang);
+  const dir = relLabelDirectional(a, b, lang, bGender);
   if (lang === 'ar') return dir;
   return dir.includes('removed') ? dir : dir + 's';
 }
