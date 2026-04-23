@@ -153,7 +153,11 @@ export default async function RootLayout({
           chain.push(f.name);
           cur = f;
         }
-        return { slug: slugByDbId.get(n.id) ?? String(n.id), label: chain.join(' ') };
+        return {
+          id: n.id,
+          slug: slugByDbId.get(n.id) ?? String(n.id),
+          label: chain.join(' '),
+        };
       });
     } catch (err) {
       console.warn('[layout] claim popup data load failed:', err);
