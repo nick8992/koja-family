@@ -39,7 +39,17 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
   const { t } = useLanguage();
   const router = useRouter();
 
+  // SSR-safe default: horizontal (works everywhere). On mount, upgrade
+  // to vertical if the viewport is desktop-sized. Avoids a hydration
+  // mismatch since server + initial client render both use horizontal.
   const [mode, setMode] = useState<LayoutMode>('horizontal');
+  useLayoutEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setMode('vertical');
+    }
+    // Deliberately empty deps — only runs once at mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [search, setSearch] = useState('');
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [tooltip, setTooltip] = useState<{ id: number; x: number; y: number } | null>(null);
@@ -97,14 +107,18 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
     const contentH = maxY - minY + 60;
 
     // 335 nodes fit-to-view yields ~0.22 scale — unreadable labels. Bias
-    // toward readable zoom; the user can pan to the rest.
+    // toward readable zoom. Vertical starts a bit more zoomed in so the
+    // opening view is centered tight on Hanna (the whole tree doesn't
+    // fit anyway, user pans to explore).
     const fitAllScale = Math.min(W / contentW, H / contentH) * 0.9;
-    const scale = Math.max(fitAllScale, 1.0);
+    const minScale = mode === 'vertical' ? 1.3 : 1.0;
+    const scale = Math.max(fitAllScale, minScale);
 
     const rootPos = layout.positions.get(ROOT_ID);
     if (rootPos) {
       // Horizontal mode: Hanna near the left, subtree at vertical center.
-      // Vertical mode: Hanna near the top, subtree at horizontal center.
+      // Vertical mode: Hanna centered horizontally, anchored ~18% down so
+      // his name sits near the top of the canvas with room for sons below.
       if (mode === 'horizontal') {
         transformRef.current = {
           tx: W * 0.12 - rootPos.x * scale,
@@ -114,7 +128,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
       } else {
         transformRef.current = {
           tx: W / 2 - rootPos.x * scale,
-          ty: H * 0.12 - rootPos.y * scale,
+          ty: H * 0.18 - rootPos.y * scale,
           scale,
         };
       }

@@ -45,7 +45,20 @@ export function layoutTree(
   // Vertical: siblings spread on X, so their labels are stacked side-by-side.
   // 60px handles the longest leaf names (Christopher, Alesandro, Lesandro, …).
   const SIBLING_GAP = isVert ? 60 : 22;
-  const GEN_GAP = isVert ? 110 : 170;
+
+  // For vertical mode, give the root generations more vertical breathing
+  // room. The root spreads its descendants across a huge horizontal
+  // range, so without extra depth the connector lines from Hanna (gen 0)
+  // to his sons (gen 1) look almost flat. These per-depth Y values let
+  // the first few generations fan out diagonally. Later generations
+  // revert to the compact 110px rhythm.
+  const VERTICAL_GEN_Y = [0, 240, 170, 130, 110, 110, 110, 110, 110];
+  function verticalYFor(d: number): number {
+    let y = 0;
+    for (let i = 1; i <= d; i++) y += VERTICAL_GEN_Y[i] ?? 110;
+    return y;
+  }
+  const HORIZONTAL_GEN_GAP = 170;
 
   const pos = new Map<number, LayoutPos>();
   let leafCount = 0;
@@ -55,7 +68,7 @@ export function layoutTree(
     if (kids.length === 0) {
       const s = leafCount * SIBLING_GAP;
       const d = depth.get(id) as number;
-      pos.set(id, isVert ? { x: s, y: d * GEN_GAP } : { x: d * GEN_GAP, y: s });
+      pos.set(id, isVert ? { x: s, y: verticalYFor(d) } : { x: d * HORIZONTAL_GEN_GAP, y: s });
       leafCount++;
       return s;
     }
@@ -68,7 +81,7 @@ export function layoutTree(
     }
     const s = ((first as number) + (last as number)) / 2;
     const d = depth.get(id) as number;
-    pos.set(id, isVert ? { x: s, y: d * GEN_GAP } : { x: d * GEN_GAP, y: s });
+    pos.set(id, isVert ? { x: s, y: verticalYFor(d) } : { x: d * HORIZONTAL_GEN_GAP, y: s });
     return s;
   }
 
