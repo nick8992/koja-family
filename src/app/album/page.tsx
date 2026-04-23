@@ -58,7 +58,12 @@ export default async function AlbumPage() {
   }
 
   // State 3: approved (or admin) → full album
-  const photos = await loadAlbum();
+  let photos: Awaited<ReturnType<typeof loadAlbum>> = [];
+  try {
+    photos = await loadAlbum();
+  } catch (err) {
+    console.error('[album] loadAlbum failed:', err);
+  }
   const [titleLabel, subLabel, emptyLabel, addedByLabel, addedByUnknownLabel, removeLabel] =
     await Promise.all([
       tServer('album.title'),
