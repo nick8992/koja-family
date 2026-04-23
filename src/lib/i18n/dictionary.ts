@@ -135,6 +135,7 @@ export const I18N: Record<Lang, Dict> = {
     'notifications.empty': 'No notifications yet.',
 
     'footer.copyright': 'The Koja Family',
+    'footer.creators': 'Created by Ronald and Nicholas Koja',
     'footer.request_addition': 'Request to be added',
 
     'events.title': 'Family Gatherings',
@@ -464,6 +465,7 @@ export const I18N: Record<Lang, Dict> = {
     'notifications.empty': 'لا توجد تنبيهات بعد.',
 
     'footer.copyright': 'عائلة كوجا',
+    'footer.creators': 'من إعداد رونالد ونيكولاس كوجا',
     'footer.request_addition': 'اطلب الإضافة',
 
     'events.title': 'لقاءات العائلة',
