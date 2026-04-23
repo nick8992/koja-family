@@ -9,7 +9,7 @@ type Slot = 'a' | 'b';
 
 const TRY_CASES: [string, string][] = [
   ['Nicholas', 'Matthew'],
-  ['Hanna Koja', 'Fredan'],
+  ['Hanna', 'Fredan'],
   ['Sepa', 'Oraha'],
   ['Daniel', 'Andreo'],
 ];

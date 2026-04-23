@@ -20,6 +20,8 @@ export function Footer() {
           <div className="font-semibold text-ink-soft">
             {t('footer.creators')}
           </div>
+          <div className="text-ink-muted">{t('footer.help')}</div>
+          <div className="text-ink-muted">{t('footer.thanks')}</div>
         </div>
         <nav className="flex flex-wrap items-center justify-center gap-4 font-display">
           <Link href="/tree" className="hover:text-terracotta-deep">

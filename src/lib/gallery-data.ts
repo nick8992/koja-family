@@ -21,10 +21,12 @@ export async function loadPersonGallery(
     uploaded_by_user: number | null;
     created_at: string;
   }>(sql`
-    SELECT id, url, caption, uploaded_by_user, created_at
-      FROM person_photos
-     WHERE person_id = ${personId}
-     ORDER BY created_at DESC
+    SELECT pp.id, pp.url, pp.caption, pp.uploaded_by_user, pp.created_at
+      FROM person_photos pp
+      JOIN persons per ON per.id = pp.person_id
+     WHERE pp.person_id = ${personId}
+       AND (per.profile_photo_url IS NULL OR pp.url <> per.profile_photo_url)
+     ORDER BY pp.created_at DESC
      LIMIT ${limit}
   `);
   return (rows as unknown as {

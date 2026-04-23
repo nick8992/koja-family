@@ -146,6 +146,12 @@ export default async function HomePage() {
                     </span>
                     <span className="font-display text-sm font-semibold text-ink">
                       {post.author.firstName}
+                      {post.author.fatherFirstName || post.author.grandfatherFirstName ? (
+                        <span className="font-normal text-ink-muted">
+                          {post.author.fatherFirstName ? ` ${post.author.fatherFirstName}` : ''}
+                          {post.author.grandfatherFirstName ? ` ${post.author.grandfatherFirstName}` : ''}
+                        </span>
+                      ) : null}
                     </span>
                     <span className="ms-auto font-display text-xs text-ink-muted">
                       {new Date(post.createdAt).toLocaleDateString(

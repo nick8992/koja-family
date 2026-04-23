@@ -116,10 +116,6 @@ export async function uploadProfilePhotoAction(
     INSERT INTO edit_history (person_id, edited_by_user, field_name, old_value, new_value)
     VALUES (${personId}, ${Number(user.id)}, 'profile_photo_url', ${prev}, ${publicUrl})
   `);
-  await db.execute(sql`
-    INSERT INTO person_photos (person_id, uploaded_by_user, url, caption)
-    VALUES (${personId}, ${Number(user.id)}, ${publicUrl}, NULL)
-  `);
 
   revalidatePath(`/profile/${personId}`);
   revalidatePath('/tree');

@@ -144,6 +144,8 @@ export const I18N: Record<Lang, Dict> = {
 
     'footer.copyright': 'The Koja Family',
     'footer.creators': 'Created by Ronald and Nicholas Koja',
+    'footer.help': 'For help, questions, or information email us at admin@kojafamily.com',
+    'footer.thanks': 'Thank you to Fawaz and Dawood Koja for the research to make this project happen!',
     'footer.request_addition': 'Request to be added',
 
     'events.title': 'Family Gatherings',
@@ -481,6 +483,8 @@ export const I18N: Record<Lang, Dict> = {
 
     'footer.copyright': 'عائلة كوجا',
     'footer.creators': 'من إعداد رونالد ونيكولاس كوجا',
+    'footer.help': 'للمساعدة أو الاستفسارات أو المعلومات، راسلونا على admin@kojafamily.com',
+    'footer.thanks': 'شكراً لفواز وداود كوجا على الأبحاث التي جعلت هذا المشروع ممكناً!',
     'footer.request_addition': 'اطلب الإضافة',
 
     'events.title': 'لقاءات العائلة',

@@ -4,19 +4,23 @@ import { db } from '@/db';
 
 export type PostKind = 'general' | 'story' | 'business' | 'announcement';
 
+export type FeedAuthor = {
+  userId: number;
+  personId: number;
+  firstName: string;
+  fatherFirstName: string | null;
+  grandfatherFirstName: string | null;
+  photoUrl: string | null;
+  approved: boolean;
+};
+
 export type FeedPost = {
   id: number;
   body: string;
   kind: PostKind;
   photoUrls: string[];
   createdAt: string;
-  author: {
-    userId: number;
-    personId: number;
-    firstName: string;
-    photoUrl: string | null;
-    approved: boolean;
-  };
+  author: FeedAuthor;
   pendingForViewer: boolean;
   likeCount: number;
   viewerLiked: boolean;
@@ -30,13 +34,7 @@ export type FeedComment = {
   body: string;
   photoUrls: string[];
   createdAt: string;
-  author: {
-    userId: number;
-    personId: number;
-    firstName: string;
-    photoUrl: string | null;
-    approved: boolean;
-  };
+  author: FeedAuthor;
   pendingForViewer: boolean;
 };
 
@@ -49,6 +47,8 @@ type PostRow = {
   author_user_id: number;
   author_person_id: number;
   author_first_name: string;
+  author_father_first_name: string | null;
+  author_grandfather_first_name: string | null;
   author_photo_url: string | null;
   author_approved: boolean;
   like_count: number;
@@ -65,6 +65,8 @@ type CommentRow = {
   author_user_id: number;
   author_person_id: number;
   author_first_name: string;
+  author_father_first_name: string | null;
+  author_grandfather_first_name: string | null;
   author_photo_url: string | null;
   author_approved: boolean;
 };
@@ -84,6 +86,8 @@ export async function loadFeed(
            p.author_user_id,
            u.person_id                AS author_person_id,
            per.first_name             AS author_first_name,
+           fat.first_name             AS author_father_first_name,
+           gf.first_name              AS author_grandfather_first_name,
            per.profile_photo_url      AS author_photo_url,
            (u.approved_at IS NOT NULL) AS author_approved,
            (SELECT COUNT(*)::int FROM post_likes pl WHERE pl.post_id = p.id) AS like_count,
@@ -94,6 +98,8 @@ export async function loadFeed(
       FROM posts p
       JOIN users u   ON u.id  = p.author_user_id
       JOIN persons per ON per.id = u.person_id
+      LEFT JOIN persons fat ON fat.id = per.father_id
+      LEFT JOIN persons gf  ON gf.id  = fat.father_id
      WHERE p.deleted_at IS NULL
        AND (u.approved_at IS NOT NULL OR p.author_user_id = ${viewer})
      ORDER BY p.created_at DESC
@@ -109,6 +115,8 @@ export async function loadFeed(
       userId: r.author_user_id,
       personId: r.author_person_id,
       firstName: r.author_first_name,
+      fatherFirstName: r.author_father_first_name,
+      grandfatherFirstName: r.author_grandfather_first_name,
       photoUrl: r.author_photo_url,
       approved: !!r.author_approved,
     },
@@ -135,11 +143,15 @@ export async function loadFeed(
            c.author_user_id,
            u.person_id                AS author_person_id,
            per.first_name             AS author_first_name,
+           fat.first_name             AS author_father_first_name,
+           gf.first_name              AS author_grandfather_first_name,
            per.profile_photo_url      AS author_photo_url,
            (u.approved_at IS NOT NULL) AS author_approved
       FROM comments c
       JOIN users u   ON u.id  = c.author_user_id
       JOIN persons per ON per.id = u.person_id
+      LEFT JOIN persons fat ON fat.id = per.father_id
+      LEFT JOIN persons gf  ON gf.id  = fat.father_id
      WHERE c.deleted_at IS NULL
        AND c.post_id IN (${idList})
        AND (u.approved_at IS NOT NULL OR c.author_user_id = ${viewer})
@@ -157,6 +169,8 @@ export async function loadFeed(
         userId: r.author_user_id,
         personId: r.author_person_id,
         firstName: r.author_first_name,
+        fatherFirstName: r.author_father_first_name,
+        grandfatherFirstName: r.author_grandfather_first_name,
         photoUrl: r.author_photo_url,
         approved: !!r.author_approved,
       },

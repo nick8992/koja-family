@@ -235,6 +235,12 @@ function PostCard({
           <span className="flex flex-col leading-tight">
             <span className="font-display text-base font-semibold text-ink hover:text-terracotta-deep">
               {post.author.firstName}
+              {post.author.fatherFirstName || post.author.grandfatherFirstName ? (
+                <span className="font-normal text-ink-muted">
+                  {post.author.fatherFirstName ? ` ${post.author.fatherFirstName}` : ''}
+                  {post.author.grandfatherFirstName ? ` ${post.author.grandfatherFirstName}` : ''}
+                </span>
+              ) : null}
             </span>
             {rel ? (
               <span className="text-xs italic text-ink-muted">{rel}</span>
@@ -321,6 +327,12 @@ function PostCard({
                         className="font-display text-sm font-semibold text-ink hover:text-terracotta-deep"
                       >
                         {c.author.firstName}
+                        {c.author.fatherFirstName || c.author.grandfatherFirstName ? (
+                          <span className="font-normal text-ink-muted">
+                            {c.author.fatherFirstName ? ` ${c.author.fatherFirstName}` : ''}
+                            {c.author.grandfatherFirstName ? ` ${c.author.grandfatherFirstName}` : ''}
+                          </span>
+                        ) : null}
                       </Link>
                       {cRel ? (
                         <span className="text-[11px] italic text-ink-muted">

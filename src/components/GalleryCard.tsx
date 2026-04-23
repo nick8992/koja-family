@@ -67,7 +67,7 @@ export function GalleryCard({
   const [error, setError] = useState<string | null>(null);
 
   const hasPhotos = photos.length > 0;
-  if (!hasPhotos && !canEdit) return null;
+  if (!hasPhotos) return null;
 
   async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
@@ -207,25 +207,6 @@ export function GalleryCard({
             );
           })}
         </div>
-      ) : canEdit ? (
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="group mt-2 flex w-full flex-col items-center justify-center gap-3 rounded-sm border-2 border-dashed border-[var(--color-border-dark)] bg-parchment-deep py-10 text-center transition-colors hover:border-terracotta hover:bg-cream disabled:opacity-60"
-        >
-          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-olive-deep bg-olive-deep text-gold-light transition-colors group-hover:border-terracotta-deep group-hover:bg-terracotta-deep">
-            <PlusIcon large />
-          </span>
-          <span className="font-display max-w-sm text-[14px] italic leading-relaxed text-ink-muted">
-            {t('gallery.empty.prompt')}
-          </span>
-          <span className="font-display rounded-sm border border-olive-deep bg-olive-deep px-4 py-1.5 text-xs font-medium text-cream group-hover:border-terracotta-deep group-hover:bg-terracotta-deep">
-            {uploading && progress
-              ? `${progress.done}/${progress.total}`
-              : t('gallery.empty.cta')}
-          </span>
-        </button>
       ) : null}
     </section>
   );
