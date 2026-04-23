@@ -608,7 +608,7 @@ export const I18N: Record<Lang, Dict> = {
     'calc.second': 'الشخص الثاني',
     'calc.placeholder': 'اكتب اسمًا…',
     'calc.empty': 'اختر شخصين لعرض صلة القرابة',
-    'calc.try': 'جرّب:',
+    'calc.try': 'أمثلة:',
     'calc.mrca': 'أقرب جدّ مشترك',
     'calc.and': 'و',
     'calc.are': 'هما',
