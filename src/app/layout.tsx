@@ -8,6 +8,7 @@ import { getLanguage } from '@/lib/i18n/server';
 import { LanguageProvider } from '@/lib/i18n/context';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
+import { LanguageToggle } from '@/components/LanguageToggle';
 import { loadUnreadCount } from '@/lib/notifications';
 
 const fraunces = Fraunces({
@@ -138,6 +139,11 @@ export default async function RootLayout({
         <LanguageProvider lang={lang}>
           <div id="app-root">
             <Header session={headerSession} />
+            {/* Mobile-only floating language toggle — always-visible under
+                the sticky header. Desktop toggle lives inside the header. */}
+            <div className="fixed end-3 top-[60px] z-30 md:hidden">
+              <LanguageToggle />
+            </div>
             <main className="flex-1">{children}</main>
             <Footer />
           </div>

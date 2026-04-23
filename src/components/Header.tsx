@@ -103,9 +103,11 @@ export function Header({ session }: { session: Session }) {
           ) : null}
         </nav>
 
-        {/* Right cluster: lang + auth + mobile hamburger */}
+        {/* Right cluster: lang (desktop only) + auth + mobile hamburger */}
         <div className="flex shrink-0 items-center gap-2">
-          <LanguageToggle />
+          <div className="hidden md:block">
+            <LanguageToggle />
+          </div>
 
           {session ? (
             <AuthSide session={session} />
