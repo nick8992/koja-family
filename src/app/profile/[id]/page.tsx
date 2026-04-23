@@ -40,13 +40,6 @@ function fmtField(v: string | null | undefined, lang: 'en' | 'ar'): string {
   return v;
 }
 
-function fmtBirthDeath(p: PersonRecord, lang: 'en' | 'ar'): string {
-  if (!p.birthDate && !p.deathDate) return translate(lang, 'profile.not_set');
-  const b = p.birthDate ?? '?';
-  if (p.isDeceased || p.deathDate) return `${b} \u2013 ${p.deathDate ?? '?'}`;
-  return b;
-}
-
 function fmtBirthYear(p: PersonRecord, lang: 'en' | 'ar'): string {
   if (p.birthYear == null) return translate(lang, 'profile.not_set');
   return String(p.birthYear);
@@ -257,6 +250,7 @@ export default async function ProfilePage({ params }: Props) {
           <EditableField
             personId={id}
             field="current_location"
+            type="location"
             label={await tServer('profile.field.location')}
             value={maskPrivate(fmtField(person.currentLocation, lang))}
             rawValue={person.currentLocation ?? ''}
@@ -265,18 +259,10 @@ export default async function ProfilePage({ params }: Props) {
           <EditableField
             personId={id}
             field="birth_year"
+            type="year"
             label={await tServer('profile.field.birthYear')}
             value={maskPrivate(fmtBirthYear(person, lang))}
             rawValue={person.birthYear != null ? String(person.birthYear) : ''}
-            editable={canEditHere}
-          />
-          <EditableField
-            personId={id}
-            field="birth_date"
-            label={await tServer('profile.field.born')}
-            type="date"
-            value={maskPrivate(fmtBirthDeath(person, lang))}
-            rawValue={person.birthDate ?? ''}
             editable={canEditHere}
           />
           <EditableField
@@ -309,12 +295,9 @@ export default async function ProfilePage({ params }: Props) {
               field="is_deceased"
               label={await tServer('edit.deceased.title')}
               type="bool"
-              value={
-                person.isDeceased
-                  ? await tServer('tree.legend.deceased')
-                  : await tServer('profile.not_set')
-              }
+              value={person.isDeceased ? await tServer('tree.legend.deceased') : ''}
               rawValue={person.isDeceased ? 'true' : 'false'}
+              placeholder=""
               editable
             />
           ) : null}

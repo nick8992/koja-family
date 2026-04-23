@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/lib/i18n/context';
 import {
@@ -10,18 +10,32 @@ import {
 
 const initial: UpdateFieldState = { status: 'idle' };
 
-export type EditFieldType = 'text' | 'textarea' | 'date' | 'bool';
+export type EditFieldType =
+  | 'text'
+  | 'textarea'
+  | 'date'
+  | 'bool'
+  | 'year'
+  | 'location';
 
 type Props = {
   personId: number;
   field: string;
   label: string;
+  /** Text shown when the field is not in edit mode. */
   value: string;
   type?: EditFieldType;
-  /** Raw stored value, for pre-filling the input (may differ from display). */
+  /** Raw stored value, pre-filled into the input on open. For location,
+   *  the value is "state, country" (parsed on open). */
   rawValue?: string;
   editable: boolean;
+  /** Override the "(not set)" fallback when value is empty. Pass "" to
+   *  render a blank cell (e.g. the deceased row when alive). */
+  placeholder?: string;
 };
+
+const CURRENT_YEAR = new Date().getFullYear();
+const EARLIEST_YEAR = 1800;
 
 export function EditableField({
   personId,
@@ -31,11 +45,28 @@ export function EditableField({
   type = 'text',
   rawValue,
   editable,
+  placeholder,
 }: Props) {
   const { t } = useLanguage();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(updatePersonFieldAction, initial);
+
+  // Location uses local state to compose "state, country" into the
+  // single hidden "value" field the server action expects.
+  const [locState, setLocState] = useState('');
+  const [locCountry, setLocCountry] = useState('');
+  useEffect(() => {
+    if (type !== 'location') return;
+    const raw = rawValue ?? '';
+    const parts = raw.split(',').map((s) => s.trim());
+    setLocState(parts[0] ?? '');
+    setLocCountry(parts[1] ?? '');
+  }, [rawValue, type, open]);
+  const locationJoined = useMemo(() => {
+    const bits = [locState, locCountry].map((s) => s.trim()).filter((s) => s.length > 0);
+    return bits.join(', ');
+  }, [locState, locCountry]);
 
   useEffect(() => {
     if (state.status === 'ok') {
@@ -45,12 +76,13 @@ export function EditableField({
   }, [state, router]);
 
   const initialRaw = rawValue ?? (value === t('profile.not_set') ? '' : value);
+  const display = value && value.length > 0 ? value : placeholder ?? t('profile.not_set');
 
   if (!editable) {
     return (
       <div className="flex items-center justify-between border-b border-dotted border-border py-2 text-sm last:border-b-0">
         <span className="font-display italic text-ink-muted">{label}</span>
-        <span className="font-medium text-ink text-end">{value}</span>
+        <span className="font-medium text-ink text-end">{display}</span>
       </div>
     );
   }
@@ -61,10 +93,10 @@ export function EditableField({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="group flex items-center gap-1.5 text-end font-medium text-ink transition-colors hover:text-terracotta-deep"
+        className="flex items-center gap-1.5 text-end font-medium text-ink transition-colors hover:text-terracotta-deep"
       >
-        <span className="border-b border-dashed border-transparent group-hover:border-terracotta">
-          {value}
+        <span className="border-b border-dashed border-border-dark hover:border-terracotta">
+          {display || '\u00A0'}
         </span>
         <EditIcon />
       </button>
@@ -124,6 +156,53 @@ export function EditableField({
                     className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
                   />
                 </label>
+              ) : type === 'year' ? (
+                <label className="font-display block text-sm italic text-ink-muted">
+                  {t('edit.year.label')}
+                  <select
+                    name="value"
+                    defaultValue={initialRaw}
+                    autoFocus
+                    className="font-display mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-base text-ink focus:outline-1 focus:outline-olive"
+                  >
+                    <option value="">—</option>
+                    {Array.from(
+                      { length: CURRENT_YEAR - EARLIEST_YEAR + 1 },
+                      (_, i) => CURRENT_YEAR - i
+                    ).map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ) : type === 'location' ? (
+                <>
+                  <input type="hidden" name="value" value={locationJoined} />
+                  <label className="font-display block text-sm italic text-ink-muted">
+                    {t('edit.location.state')}
+                    <input
+                      type="text"
+                      value={locState}
+                      onChange={(e) => setLocState(e.target.value)}
+                      autoFocus
+                      maxLength={80}
+                      placeholder={t('claim.state.placeholder')}
+                      className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
+                    />
+                  </label>
+                  <label className="font-display block text-sm italic text-ink-muted">
+                    {t('edit.location.country')}
+                    <input
+                      type="text"
+                      value={locCountry}
+                      onChange={(e) => setLocCountry(e.target.value)}
+                      maxLength={80}
+                      placeholder={t('claim.country.placeholder')}
+                      className="mt-1 block w-full border border-[var(--color-border-dark)] bg-cream px-3.5 py-2.5 text-sm text-ink focus:outline-1 focus:outline-olive"
+                    />
+                  </label>
+                </>
               ) : type === 'bool' ? (
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -181,7 +260,7 @@ function EditIcon() {
       fill="none"
       stroke="currentColor"
       strokeWidth="1.25"
-      className="opacity-0 transition-opacity group-hover:opacity-100"
+      className="text-terracotta-deep/70"
       aria-hidden
     >
       <path d="M11 2l3 3-8 8H3v-3l8-8zm1-1l2 2 1.5-1.5-2-2L12 1z" />

@@ -244,6 +244,9 @@ export const I18N: Record<Lang, Dict> = {
     'edit.cancel': 'Cancel',
     'edit.error.forbidden': 'You can only edit yourself, your father, grandfather, or great-grandfather.',
     'edit.error.generic': 'Could not save. Please try again.',
+    'edit.year.label': 'Year of birth',
+    'edit.location.state': 'State or province',
+    'edit.location.country': 'Country',
 
     'photo.upload': 'Upload a photo',
     'photo.change': 'Change photo',
@@ -565,6 +568,9 @@ export const I18N: Record<Lang, Dict> = {
     'edit.cancel': 'إلغاء',
     'edit.error.forbidden': 'يمكنك فقط تعديل نفسك، أو أبيك، أو جدّك، أو جدّ جدّك.',
     'edit.error.generic': 'تعذّر الحفظ. حاول مرة أخرى.',
+    'edit.year.label': 'سنة الميلاد',
+    'edit.location.state': 'الولاية أو المقاطعة',
+    'edit.location.country': 'الدولة',
 
     'photo.upload': 'أضف صورة',
     'photo.change': 'غيّر الصورة',
