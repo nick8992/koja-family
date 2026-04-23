@@ -703,7 +703,7 @@ export const I18N: Record<Lang, Dict> = {
     'admin.undoDeletion.button': 'تراجع',
 
     'edit.title': 'تعديل',
-    'edit.action': 'تعديل',
+    'edit.action': 'أضف',
     'edit.save': 'حفظ',
     'edit.cancel': 'إلغاء',
     'edit.error.forbidden': 'يمكنك فقط تعديل نفسك، أو أبيك، أو جدّك، أو جدّ جدّك.',
