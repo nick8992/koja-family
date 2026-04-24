@@ -71,3 +71,30 @@ export function ancestorChainIds(byId: Map<number, TreeNode>, id: number): numbe
 export function displayName(n: string): string {
   return n.replace(/ Koja$/, '');
 }
+
+/**
+ * Walk up from Hanna (id=1) through father_id links and return the
+ * topmost ancestor's first name + " Koja" suffix — the current "head"
+ * of the family tree, however deep the line goes. Used in the hero
+ * tagline and the tree page subtitle so they stay accurate as more
+ * ancestors are added.
+ */
+export async function loadRootDisplayName(): Promise<string> {
+  const rows = await db.execute<{ first_name: string }>(sql`
+    WITH RECURSIVE up AS (
+      SELECT id, first_name, father_id
+        FROM persons
+       WHERE id = 1 AND deleted_at IS NULL
+      UNION ALL
+      SELECT p.id, p.first_name, p.father_id
+        FROM persons p
+        JOIN up ON p.id = up.father_id
+       WHERE p.deleted_at IS NULL
+    )
+    SELECT first_name FROM up WHERE father_id IS NULL LIMIT 1
+  `);
+  const arr = rows as unknown as { first_name: string }[];
+  const first = arr[0]?.first_name?.trim();
+  if (!first) return 'Hanna Koja';
+  return /\bKoja\b/i.test(first) ? first : `${first} Koja`;
+}

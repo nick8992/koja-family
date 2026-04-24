@@ -5,6 +5,7 @@ import { auth } from '@/auth';
 import { db } from '@/db';
 import { loadFeed } from '@/lib/feed-data';
 import { loadUpcomingEvents } from '@/lib/event-data';
+import { loadRootDisplayName } from '@/lib/tree-data';
 import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 
@@ -40,10 +41,11 @@ export default async function HomePage() {
   const session = await auth();
   const viewerUserId = session?.user?.id ? Number(session.user.id) : null;
   const lang = await getLanguage();
-  const [stats, feed, events] = await Promise.all([
+  const [stats, feed, events, rootName] = await Promise.all([
     loadStats(),
     loadFeed(viewerUserId, 3),
     loadUpcomingEvents(viewerUserId, 3),
+    loadRootDisplayName(),
   ]);
 
   return (
@@ -73,7 +75,11 @@ export default async function HomePage() {
           {await tServer('home.hero.arabic')}
         </p>
         <p className="font-display mx-auto mb-3 max-w-2xl text-base italic leading-snug text-ink-muted sm:mb-5 sm:text-xl sm:leading-relaxed">
-          {await tServer('home.hero.tagline', { n: stats.total })}
+          {await tServer('home.hero.tagline', {
+            n: stats.total,
+            g: stats.generations,
+            root: rootName,
+          })}
         </p>
         <p className="font-display mx-auto mb-2 max-w-2xl text-[13px] leading-snug text-ink-soft sm:mb-3 sm:text-[15px] sm:leading-relaxed">
           {await tServer('home.hero.expand')}
