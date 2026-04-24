@@ -80,6 +80,77 @@ export async function addPersonAction(
 }
 
 // ===========================================================================
+// Admin-only: insert a father above an existing person on the tree.
+// Creates a new root-level person (father_id = NULL) and points the
+// target person at them. Useful for correcting a missing father or
+// extending the tree upward from Hanna. Refuses if the target
+// already has a father — changing father_id is a destructive edit
+// that's out of scope for this button.
+// ===========================================================================
+
+export async function addFatherAction(
+  _prev: AddPersonState,
+  formData: FormData
+): Promise<AddPersonState> {
+  let user: SessionUser;
+  try {
+    user = await requireSessionUser();
+  } catch {
+    return { status: 'error', message: 'not_signed_in' };
+  }
+  if (user.role !== 'admin') {
+    return { status: 'error', message: 'forbidden' };
+  }
+
+  const personIdRaw = formData.get('personId');
+  const personId = Number(personIdRaw);
+  if (!Number.isInteger(personId) || personId < 1) {
+    return { status: 'error', message: 'bad_person' };
+  }
+
+  const firstName = String(formData.get('firstName') ?? '').trim();
+  if (firstName.length < 1 || firstName.length > 100) {
+    return { status: 'error', message: 'bad_name' };
+  }
+  const genderRaw = String(formData.get('gender') ?? 'M');
+  const gender = genderRaw === 'F' ? 'F' : 'M';
+
+  const check = await db.execute<{ father_id: number | null }>(sql`
+    SELECT father_id FROM persons WHERE id = ${personId} AND deleted_at IS NULL LIMIT 1
+  `);
+  const row = (check as unknown as { father_id: number | null }[])[0];
+  if (!row) return { status: 'error', message: 'not_found' };
+  if (row.father_id != null) {
+    return { status: 'error', message: 'already_has_father' };
+  }
+
+  let newId = 0;
+  try {
+    await db.transaction(async (tx) => {
+      const rows = await tx.execute<{ id: number }>(sql`
+        INSERT INTO persons (first_name, gender, father_id)
+        VALUES (${firstName}, ${gender}, NULL)
+        RETURNING id
+      `);
+      newId = (rows as unknown as { id: number }[])[0].id;
+      await tx.execute(sql`
+        UPDATE persons SET father_id = ${newId}, updated_at = NOW()
+         WHERE id = ${personId}
+      `);
+    });
+  } catch (err) {
+    console.error('[addFather] tx failed:', err);
+    return { status: 'error', message: 'insert_failed' };
+  }
+
+  revalidatePath(`/profile/${personId}`);
+  revalidatePath(`/profile/${newId}`);
+  revalidatePath('/tree');
+  revalidatePath('/');
+  return { status: 'ok', newId };
+}
+
+// ===========================================================================
 // Update a single field on an existing person.
 //   - Approved users: write through to `persons`, append `edit_history`.
 //   - Unapproved users: write to `pending_edits`. Their own reads overlay

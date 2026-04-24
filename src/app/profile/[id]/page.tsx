@@ -26,6 +26,7 @@ import { getLanguage, tServer } from '@/lib/i18n/server';
 import { translate } from '@/lib/i18n/dictionary';
 import { loadPersonGallery } from '@/lib/gallery-data';
 import { AddChildButton } from '@/components/AddChildButton';
+import { AddFatherButton } from '@/components/AddFatherButton';
 import { BiographyCard } from '@/components/BiographyCard';
 import { ClaimButton } from '@/components/ClaimButton';
 import { DeletePersonButton } from '@/components/DeletePersonButton';
@@ -244,6 +245,9 @@ export default async function ProfilePage({ params }: Props) {
               label={await tServer('addperson.cta.root_sibling')}
               parentLabel={await tServer('addperson.sub.root')}
             />
+          ) : null}
+          {sessionUser?.role === 'admin' && person.fatherId == null ? (
+            <AddFatherButton personId={person.id} personName={person.firstName} />
           ) : null}
           {sessionUser?.role === 'admin' && person.fatherId != null ? (
             <DeletePersonButton

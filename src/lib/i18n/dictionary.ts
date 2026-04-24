@@ -238,6 +238,14 @@ export const I18N: Record<Lang, Dict> = {
     'addperson.error.bad_gender': 'Please choose a gender.',
     'addperson.error.not_signed_in': 'Sign in first.',
 
+    'addfather.cta': 'Add a father',
+    'addfather.title': 'Add a father',
+    'addfather.sub': 'Add a father above',
+    'addfather.notice':
+      'Admin-only. Creates a new person with no father of their own and sets them as this person\u2019s father.',
+    'addfather.submit': 'Add father',
+    'addfather.error.already_has_father': 'This person already has a father on the tree.',
+
     'claim.title': 'Claim Your Place',
     'claim.sub': 'You are claiming the spot of',
     'claim.notice': 'An administrator will review your claim. You may begin using the site right away.',
@@ -633,6 +641,14 @@ export const I18N: Record<Lang, Dict> = {
     'addperson.error.bad_name': 'الرجاء إدخال الاسم الأول.',
     'addperson.error.bad_gender': 'الرجاء اختيار الجنس.',
     'addperson.error.not_signed_in': 'سجّل دخولك أولاً.',
+
+    'addfather.cta': 'إضافة أب',
+    'addfather.title': 'إضافة أب',
+    'addfather.sub': 'إضافة أب لـ',
+    'addfather.notice':
+      'للإداري فقط. يُنشئ شخصًا جديدًا بدون أب، ويُعيّنه والدًا لهذا الشخص.',
+    'addfather.submit': 'أضف الأب',
+    'addfather.error.already_has_father': 'لهذا الشخص أب في الشجرة بالفعل.',
 
     'claim.title': 'اطلب مكانك',
     'claim.sub': 'أنت تطالب بمكان',
