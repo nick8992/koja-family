@@ -82,9 +82,17 @@ export function EditableField({
   useEffect(() => {
     if (state.status === 'ok') {
       setOpen(false);
+      if (field === 'first_name' && state.pending === false) {
+        // The URL encodes the person's name (e.g. /profile/NicholasFB),
+        // so a rename makes the current URL stale. A hard-nav to the
+        // same pathname forces a fresh server render, which detects the
+        // mismatch and redirects to the new canonical slug.
+        window.location.href = window.location.pathname;
+        return;
+      }
       router.refresh();
     }
-  }, [state, router]);
+  }, [state, router, field]);
 
   // A row with no value set at all:
   //   - hidden entirely if the viewer can't edit it

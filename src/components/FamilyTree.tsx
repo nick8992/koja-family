@@ -21,7 +21,11 @@ type Props = {
   currentUserPersonId: number | null;
 };
 
-const ROOT_ID = 1;
+// id of the original Hanna — the historical "top" of the tree. Kept as
+// a fallback anchor: if ancestors are added above him, we walk up from
+// this id to find the current root dynamically so the tree always
+// renders from the topmost person on Hanna's line.
+const HANNA_ID = 1;
 
 function fullNameFor(id: number, byId: Map<number, TreeNode>): string {
   const chain: string[] = [];
@@ -72,7 +76,21 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
   const displayIds = useMemo(() => computeDisplayIds(nodes), [nodes]);
   const slugByDbId = useMemo(() => computeProfileSlugs(nodes).slugByDbId, [nodes]);
 
-  const layout = useMemo(() => layoutTree(nodes, ROOT_ID, mode), [nodes, mode]);
+  // Topmost ancestor on Hanna's patrilineal line — walks from Hanna
+  // (id=1) up through `fid` links until someone has no father, so any
+  // ancestors added above him surface as the new tree root.
+  const rootId = useMemo(() => {
+    let cur = byId.get(HANNA_ID);
+    let safety = 0;
+    while (cur?.fid != null && safety++ < 100) {
+      const parent = byId.get(cur.fid);
+      if (!parent) break;
+      cur = parent;
+    }
+    return cur?.id ?? HANNA_ID;
+  }, [byId]);
+
+  const layout = useMemo(() => layoutTree(nodes, rootId, mode), [nodes, rootId, mode]);
 
   const links = useMemo(() => {
     const out: { d: string; id: number }[] = [];
@@ -119,7 +137,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
       mode === 'vertical' ? (H * 0.85) / contentH : (W * 0.9) / contentW;
     const scale = Math.min(mainAxisFit, 1.2);
 
-    const rootPos = layout.positions.get(ROOT_ID);
+    const rootPos = layout.positions.get(rootId);
     if (rootPos) {
       // Vertical: Hanna at the top-center of the canvas.
       // Horizontal: Hanna at the left-middle of the canvas.
@@ -144,7 +162,7 @@ export function FamilyTree({ nodes, currentUserPersonId }: Props) {
       };
     }
     applyTransform();
-  }, [layout, applyTransform, mode]);
+  }, [layout, applyTransform, mode, rootId]);
 
   useLayoutEffect(() => {
     // useLayoutEffect + RAF retry: measure the container synchronously
