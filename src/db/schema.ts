@@ -266,6 +266,23 @@ export const albumPhotos = pgTable(
   (t) => [index('idx_album_created').on(t.createdAt)]
 );
 
+export const familyHistoryPosts = pgTable(
+  'family_history_posts',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    authorUserId: integer('author_user_id')
+      .notNull()
+      .references(() => users.id),
+    title: varchar('title', { length: 200 }).notNull(),
+    body: text('body').notNull(),
+    photoUrl: text('photo_url'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+  },
+  (t) => [index('idx_history_created').on(t.createdAt)]
+);
+
 export const passwordResets = pgTable('password_resets', {
   token: varchar('token', { length: 64 }).primaryKey(),
   userId: integer('user_id')

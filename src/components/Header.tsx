@@ -22,6 +22,7 @@ const NAV = [
   { key: 'nav.feed', href: '/feed' },
   { key: 'nav.events', href: '/events' },
   { key: 'nav.album', href: '/album' },
+  { key: 'nav.history', href: '/history' },
   { key: 'nav.calc', href: '/relations' },
 ] as const;
 
